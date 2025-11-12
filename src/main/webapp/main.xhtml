@@ -7,8 +7,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta charset="UTF-8"/>
     <title>Лабораторная работа 2 - Проверка попадания точки</title>
-    <h:outputStylesheet name="styles/reset.css"/>
-    <h:outputStylesheet name="styles/main.css"/>
+    <link rel="stylesheet" type="text/css" href="#{request.contextPath}/styles/reset.css"/>
+    <link rel="stylesheet" type="text/css" href="#{request.contextPath}/styles/main.css"/>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,10 +46,18 @@
         .btn:hover {
             background: #e0e0e0;
         }
+        .button-group .btn.selected,
+        #xButtonGroup .btn.selected,
         .btn.selected {
-            background: #2196F3;
-            color: white;
-            border-color: #2196F3;
+            background: #2196F3 !important;
+            color: white !important;
+            border-color: #2196F3 !important;
+        }
+        .button-group .btn.selected:hover,
+        #xButtonGroup .btn.selected:hover,
+        .btn.selected:hover {
+            background: #1976D2 !important;
+            border-color: #1976D2 !important;
         }
         .canvas-container {
             text-align: center;
@@ -159,6 +167,45 @@
         </p>
     </div>
     
+    <script type="text/javascript">
+        <![CDATA[
+        // Make setXValue globally accessible IMMEDIATELY (before area.js loads)
+        window.setXValue = function(x) {
+            console.log('setXValue called with:', x);
+            if (typeof currentX !== 'undefined') {
+                currentX = x;
+            }
+            
+            // Try multiple ways to find the hidden input (JSF may generate different IDs)
+            var hiddenInput = document.getElementById('mainForm:xValue') || 
+                             document.querySelector('[id$=":xValue"]') ||
+                             document.querySelector('input[type="hidden"][id*="xValue"]');
+            
+            if (hiddenInput) {
+                console.log('Found xValue input, setting value to:', x);
+                hiddenInput.value = x;
+                // Trigger change event to ensure JSF recognizes the change
+                var changeEvent = new Event('change', { bubbles: true });
+                hiddenInput.dispatchEvent(changeEvent);
+                // Also trigger input event
+                var inputEvent = new Event('input', { bubbles: true });
+                hiddenInput.dispatchEvent(inputEvent);
+                console.log('xValue input updated, current value:', hiddenInput.value);
+            } else {
+                console.warn('Could not find xValue input element. Tried: mainForm:xValue, [id$=":xValue"], input[type="hidden"][id*="xValue"]');
+            }
+            
+            // Update button selection for X - use helper function
+            if (typeof window.updateXButtonSelection === 'function') {
+                window.updateXButtonSelection(x);
+            }
+            
+            if (typeof window.updateCanvas === 'function') {
+                window.updateCanvas();
+            }
+        };
+        ]]>
+    </script>
     <script type="text/javascript" src="#{request.contextPath}/scripts/area.js"></script>
     
     <div class="form-section">
@@ -194,74 +241,26 @@
     <h:link outcome="start" value="Вернуться на стартовую страницу" styleClass="link"/>
     
     <script>
-        var currentR = #{areaCheckBean.r};
+        // Initialize variables - JSF expressions evaluated here
+        var currentR = #{areaCheckBean.r != null ? areaCheckBean.r : 1.0};
         var currentX = #{areaCheckBean.x != null ? areaCheckBean.x : 'null'};
         var currentY = #{areaCheckBean.y != null ? areaCheckBean.y : 'null'};
     </script>
     <script>
         <![CDATA[
-        // Make setXValue globally accessible
-        window.setXValue = function(x) {
-            console.log('setXValue called with:', x);
-            currentX = x;
-            
-            // Try multiple ways to find the hidden input (JSF may generate different IDs)
-            var hiddenInput = document.getElementById('mainForm:xValue') || 
-                             document.querySelector('[id$=":xValue"]') ||
-                             document.querySelector('input[type="hidden"][id*="xValue"]');
-            
-            if (hiddenInput) {
-                console.log('Found xValue input, setting value to:', x);
-                hiddenInput.value = x;
-                // Trigger change event to ensure JSF recognizes the change
-                var changeEvent = new Event('change', { bubbles: true });
-                hiddenInput.dispatchEvent(changeEvent);
-                // Also trigger input event
-                var inputEvent = new Event('input', { bubbles: true });
-                hiddenInput.dispatchEvent(inputEvent);
-                console.log('xValue input updated, current value:', hiddenInput.value);
-            } else {
-                console.warn('Could not find xValue input element. Tried: mainForm:xValue, [id$=":xValue"], input[type="hidden"][id*="xValue"]');
-                // Debug: list all hidden inputs
-                var allHidden = document.querySelectorAll('input[type="hidden"]');
-                console.log('All hidden inputs:', Array.from(allHidden).map(function(inp) { return inp.id || inp.name || 'no id/name'; }));
-            }
-            
-            // Update button selection for X
-            var allFormGroups = document.querySelectorAll('#mainForm .form-group');
-            var xFormGroup = null;
-            for (var i = 0; i < allFormGroups.length; i++) {
-                var label = allFormGroups[i].querySelector('label');
-                if (label) {
-                    var labelText = label.textContent || label.innerText || '';
-                    if (labelText.trim() === 'X:') {
-                        xFormGroup = allFormGroups[i];
-                        break;
-                    }
-                }
-            }
-            if (xFormGroup) {
-                var xButtons = xFormGroup.querySelectorAll('.button-group .btn[data-x]');
-                for (var j = 0; j < xButtons.length; j++) {
-                    var btn = xButtons[j];
-                    if (btn) {
-                        btn.classList.remove('selected');
-                        var btnXValue = parseInt(btn.getAttribute('data-x'));
-                        if (!isNaN(btnXValue) && btnXValue === x) {
-                            btn.classList.add('selected');
-                        }
-                    }
-                }
-            }
-            if (typeof window.updateCanvas === 'function') {
-                window.updateCanvas();
-            }
-        };
+        // Parse number with locale support (handles both comma and dot as decimal separator)
+        function parseLocaleFloat(str) {
+            if (!str) return NaN;
+            // Convert to string, trim whitespace, replace comma with dot for parsing
+            var normalized = String(str).trim().replace(',', '.');
+            var result = parseFloat(normalized);
+            return isNaN(result) ? NaN : result;
+        }
         
         window.updateCanvas = function() {
             var rInput = document.getElementById('mainForm:rValue_input');
             if (rInput) {
-                var newR = parseFloat(rInput.value) || 1.0;
+                var newR = parseLocaleFloat(rInput.value) || 1.0;
                 // Always update and redraw, even if value seems the same (in case of formatting issues)
                 var shouldLog = Math.abs(newR - currentR) > 0.001;
                 currentR = newR;
@@ -279,32 +278,70 @@
             }
         };
         
-        // Setup X button click handlers
-        function setupXButtons() {
+        // Function to update X button visual state (make it global)
+        window.updateXButtonSelection = function(xValue) {
             var xButtonGroup = document.getElementById('xButtonGroup');
-            if (xButtonGroup) {
-                var buttons = xButtonGroup.querySelectorAll('.btn[data-x]');
-                for (var i = 0; i < buttons.length; i++) {
-                    (function(btn) {
-                        btn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            var xValue = parseInt(btn.getAttribute('data-x'));
-                            console.log('X button clicked, value:', xValue);
-                            if (typeof window.setXValue === 'function') {
-                                window.setXValue(xValue);
-                            } else {
-                                console.error('setXValue function not available');
-                            }
-                        });
-                    })(buttons[i]);
-                }
-            } else {
-                console.warn('xButtonGroup not found');
+            if (!xButtonGroup) {
+                console.warn('xButtonGroup not found for selection update');
+                return;
             }
+            var buttons = xButtonGroup.querySelectorAll('.btn[data-x]');
+            for (var i = 0; i < buttons.length; i++) {
+                var btn = buttons[i];
+                var btnXValue = parseInt(btn.getAttribute('data-x'));
+                if (!isNaN(btnXValue) && btnXValue === xValue) {
+                    // Select this button
+                    btn.classList.add('selected');
+                    btn.style.setProperty('background-color', '#2196F3', 'important');
+                    btn.style.setProperty('color', 'white', 'important');
+                    btn.style.setProperty('border-color', '#2196F3', 'important');
+                } else {
+                    // Deselect this button
+                    btn.classList.remove('selected');
+                    btn.style.removeProperty('background-color');
+                    btn.style.removeProperty('color');
+                    btn.style.removeProperty('border-color');
+                }
+            }
+        };
+        
+        // Setup X button click handlers using event delegation (works even after AJAX updates)
+        function setupXButtons() {
+            // Remove old listener if exists
+            if (window.xButtonClickHandler) {
+                document.removeEventListener('click', window.xButtonClickHandler);
+            }
+            
+            // Use event delegation on document level
+            window.xButtonClickHandler = function(e) {
+                var target = e.target;
+                // Check if clicked element is an X button or inside one
+                var btn = target.closest('#xButtonGroup .btn[data-x]');
+                if (btn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var xValue = parseInt(btn.getAttribute('data-x'));
+                    console.log('X button clicked via delegation, value:', xValue);
+                    
+                    // Immediately update visual state
+                    if (typeof window.updateXButtonSelection === 'function') {
+                        window.updateXButtonSelection(xValue);
+                    }
+                    
+                    // Then update the form value
+                    if (typeof window.setXValue === 'function') {
+                        window.setXValue(xValue);
+                    } else {
+                        console.error('setXValue function not available');
+                    }
+                }
+            };
+            
+            document.addEventListener('click', window.xButtonClickHandler, true);
+            console.log('X button handlers set up using event delegation');
         }
         
-        // Setup buttons as soon as DOM is ready
+        // Setup buttons as soon as DOM is ready and also after page load
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', setupXButtons);
         } else {
@@ -314,7 +351,7 @@
         // Initialize canvas after page load
         window.addEventListener('load', function() {
             // Setup X button handlers (in case they weren't set up earlier)
-            setupXButtons();
+            setTimeout(setupXButtons, 100);
             
             // Wait a bit for area.js to load
             setTimeout(function() {

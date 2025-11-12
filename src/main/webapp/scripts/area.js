@@ -2,6 +2,15 @@ function getCanvas() {
     return document.getElementById('area');
 }
 
+// Parse number with locale support (handles both comma and dot as decimal separator)
+function parseLocaleFloat(str) {
+    if (!str) return NaN;
+    // Convert to string, trim whitespace, replace comma with dot for parsing
+    const normalized = String(str).trim().replace(',', '.');
+    const result = parseFloat(normalized);
+    return isNaN(result) ? NaN : result;
+}
+
 function getCtxAndResize() {
     const canvas = getCanvas();
     if (!canvas) return null;
@@ -18,7 +27,7 @@ function getCtxAndResize() {
 
 function getScale() {
     const rInput = document.getElementById('mainForm:rValue_input');
-    const rVal = rInput ? parseFloat(rInput.value) : 1.0;
+    const rVal = rInput ? parseLocaleFloat(rInput.value) : 1.0;
     const r = isNaN(rVal) || rVal <= 0 ? 1.0 : rVal;
     const canvas = getCanvas();
     const size = canvas ? canvas.clientWidth : 400;
@@ -138,7 +147,7 @@ function drawPoints(ctx, scale) {
         
         // Only draw if R matches current R
         const rInput = document.getElementById('mainForm:rValue_input');
-        const currentR = rInput ? parseFloat(rInput.value) : 1.0;
+        const currentR = rInput ? parseLocaleFloat(rInput.value) : 1.0;
         if (Math.abs(r - currentR) > 0.01) return;
         
         const px = cx + x * unit;
@@ -181,7 +190,7 @@ let previewPoint = null;
 
 function mouseMoveCanvas(ev) {
     const rInput = document.getElementById('mainForm:rValue_input');
-    const rVal = rInput ? parseFloat(rInput.value) : null;
+    const rVal = rInput ? parseLocaleFloat(rInput.value) : null;
     if (!rInput || isNaN(rVal)) return; 
 
     const canvas = getCanvas();
@@ -241,7 +250,7 @@ function mouseMoveCanvas(ev) {
 
 function clickCanvas(ev) {
     const rInput = document.getElementById('mainForm:rValue_input');
-    const rVal = rInput ? parseFloat(rInput.value) : null;
+    const rVal = rInput ? parseLocaleFloat(rInput.value) : null;
     if (!rInput || isNaN(rVal)) return;
     
     const canvas = getCanvas();
