@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta charset="UTF-8"/>
+    <title>Лабораторная работа 2 - Проверка попадания точки</title>
+    <h:outputStylesheet name="styles/reset.css"/>
+    <h:outputStylesheet name="styles/main.css"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #e0e0e0;
+        }
+        .btn.selected {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            cursor: crosshair;
+            max-width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .link:hover {
+            background: #1976D2;
+        }
+    </style>
+</h:head>
+<body>
+    <h:form id="mainForm">
+        <div class="form-section">
+            <h2>Проверка попадания точки</h2>
+            
+            <div class="form-group">
+                <h:outputLabel value="X:"/>
+                <div class="button-group" id="xButtonGroup">
+                    <button type="button" class="btn" data-x="-5">-5</button>
+                    <button type="button" class="btn" data-x="-4">-4</button>
+                    <button type="button" class="btn" data-x="-3">-3</button>
+                    <button type="button" class="btn" data-x="-2">-2</button>
+                    <button type="button" class="btn" data-x="-1">-1</button>
+                    <button type="button" class="btn" data-x="0">0</button>
+                    <button type="button" class="btn" data-x="1">1</button>
+                    <button type="button" class="btn" data-x="2">2</button>
+                    <button type="button" class="btn" data-x="3">3</button>
+                </div>
+                <h:inputHidden id="xValue" value="#{areaCheckBean.x}" required="true" requiredMessage="X is required">
+                    <f:convertNumber integerOnly="true"/>
+                </h:inputHidden>
+                <h:message for="xValue" styleClass="error-message"/>
+            </div>
+            
+            <div class="form-group">
+                <h:outputLabel for="yValue" value="Y:"/>
+                <h:inputText id="yValue" value="#{areaCheckBean.y}" 
+                            required="true" requiredMessage="Y is required"
+                            converter="jakarta.faces.Double">
+                    <f:validateDoubleRange minimum="-3.0" maximum="3.0"
+                                         minimumMessage="Y must be at least -3.0"
+                                         maximumMessage="Y must be at most 3.0"/>
+                </h:inputText>
+                <p style="margin-top: 5px; font-size: 12px; color: #666; font-style: italic;">
+                    Диапазон: от -3 до 3
+                </p>
+                <h:message for="yValue" styleClass="error-message"/>
+            </div>
+            
+            <div class="form-group">
+                <h:outputLabel for="rValue" value="R:"/>
+                <p:spinner id="rValue" value="#{areaCheckBean.r}" 
+                          min="0.1" max="3.0" stepFactor="0.1" 
+                          required="true" requiredMessage="R is required"
+                          decimalPlaces="1">
+                    <f:validateDoubleRange minimum="0.1" maximum="3.0" 
+                                         minimumMessage="R must be at least 0.1"
+                                         maximumMessage="R must be at most 3.0"/>
+                    <p:ajax event="change" update="@this" oncomplete="if(typeof updateCanvas === 'function') { setTimeout(updateCanvas, 10); setTimeout(updateCanvas, 50); setTimeout(updateCanvas, 100); }"/>
+                </p:spinner>
+                <p style="margin-top: 5px; font-size: 12px; color: #666; font-style: italic;">
+                    Шаг изменения: 0.1
+                </p>
+                <h:message for="rValue" styleClass="error-message"/>
+            </div>
+            
+            <h:commandButton value="Проверить" action="#{areaCheckBean.checkPoint()}" 
+                            onclick="updateCanvas(); return true;"/>
+        </div>
+    </h:form>
+    
+    <div class="form-section">
+        <h2>Область</h2>
+        <div class="canvas-container">
+            <canvas id="area" width="400" height="400" style="border: 1px solid #ccc; display: block;"></canvas>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+            Перемещайте курсор по графику для выбора X и Y. Клик для отправки формы.
+        </p>
+    </div>
+    
+    <script type="text/javascript" src="#{request.contextPath}/scripts/area.js"></script>
+    
+    <div class="form-section">
+        <h2>История проверок</h2>
+        <h:dataTable value="#{resultsBean.results}" var="result" styleClass="results-table">
+            <h:column>
+                <f:facet name="header">Время выполнения</f:facet>
+                <h:outputText value="#{result.executionTime}"/>
+            </h:column>
+            <h:column>
+                <f:facet name="header">X</f:facet>
+                <h:outputText value="#{result.x}"/>
+            </h:column>
+            <h:column>
+                <f:facet name="header">Y</f:facet>
+                <h:outputText value="#{result.y}">
+                    <f:convertNumber maxFractionDigits="2"/>
+                </h:outputText>
+            </h:column>
+            <h:column>
+                <f:facet name="header">R</f:facet>
+                <h:outputText value="#{result.r}">
+                    <f:convertNumber maxFractionDigits="1"/>
+                </h:outputText>
+            </h:column>
+            <h:column>
+                <f:facet name="header">Попадание</f:facet>
+                <h:outputText value="#{result.hit ? 'Да' : 'Нет'}"/>
+            </h:column>
+        </h:dataTable>
+    </div>
+    
+    <h:link outcome="start" value="Вернуться на стартовую страницу" styleClass="link"/>
+    
+    <script>
+        var currentR = #{areaCheckBean.r};
+        var currentX = #{areaCheckBean.x != null ? areaCheckBean.x : 'null'};
+        var currentY = #{areaCheckBean.y != null ? areaCheckBean.y : 'null'};
+    </script>
+    <script>
+        <![CDATA[
+        // Make setXValue globally accessible
+        window.setXValue = function(x) {
+            console.log('setXValue called with:', x);
+            currentX = x;
+            
+            // Try multiple ways to find the hidden input (JSF may generate different IDs)
+            var hiddenInput = document.getElementById('mainForm:xValue') || 
+                             document.querySelector('[id$=":xValue"]') ||
+                             document.querySelector('input[type="hidden"][id*="xValue"]');
+            
+            if (hiddenInput) {
+                console.log('Found xValue input, setting value to:', x);
+                hiddenInput.value = x;
+                // Trigger change event to ensure JSF recognizes the change
+                var changeEvent = new Event('change', { bubbles: true });
+                hiddenInput.dispatchEvent(changeEvent);
+                // Also trigger input event
+                var inputEvent = new Event('input', { bubbles: true });
+                hiddenInput.dispatchEvent(inputEvent);
+                console.log('xValue input updated, current value:', hiddenInput.value);
+            } else {
+                console.warn('Could not find xValue input element. Tried: mainForm:xValue, [id$=":xValue"], input[type="hidden"][id*="xValue"]');
+                // Debug: list all hidden inputs
+                var allHidden = document.querySelectorAll('input[type="hidden"]');
+                console.log('All hidden inputs:', Array.from(allHidden).map(function(inp) { return inp.id || inp.name || 'no id/name'; }));
+            }
+            
+            // Update button selection for X
+            var allFormGroups = document.querySelectorAll('#mainForm .form-group');
+            var xFormGroup = null;
+            for (var i = 0; i < allFormGroups.length; i++) {
+                var label = allFormGroups[i].querySelector('label');
+                if (label) {
+                    var labelText = label.textContent || label.innerText || '';
+                    if (labelText.trim() === 'X:') {
+                        xFormGroup = allFormGroups[i];
+                        break;
+                    }
+                }
+            }
+            if (xFormGroup) {
+                var xButtons = xFormGroup.querySelectorAll('.button-group .btn[data-x]');
+                for (var j = 0; j < xButtons.length; j++) {
+                    var btn = xButtons[j];
+                    if (btn) {
+                        btn.classList.remove('selected');
+                        var btnXValue = parseInt(btn.getAttribute('data-x'));
+                        if (!isNaN(btnXValue) && btnXValue === x) {
+                            btn.classList.add('selected');
+                        }
+                    }
+                }
+            }
+            if (typeof window.updateCanvas === 'function') {
+                window.updateCanvas();
+            }
+        };
+        
+        window.updateCanvas = function() {
+            var rInput = document.getElementById('mainForm:rValue_input');
+            if (rInput) {
+                var newR = parseFloat(rInput.value) || 1.0;
+                // Always update and redraw, even if value seems the same (in case of formatting issues)
+                var shouldLog = Math.abs(newR - currentR) > 0.001;
+                currentR = newR;
+                if (shouldLog) {
+                    console.log('updateCanvas: R value changed to:', currentR, 'input value:', rInput.value);
+                }
+            } else {
+                console.warn('updateCanvas: rInput not found');
+            }
+            // Always redraw, even if R didn't change (to ensure canvas is up to date)
+            if (typeof drawAll === 'function') {
+                drawAll();
+            } else {
+                console.warn('drawAll function not available');
+            }
+        };
+        
+        // Setup X button click handlers
+        function setupXButtons() {
+            var xButtonGroup = document.getElementById('xButtonGroup');
+            if (xButtonGroup) {
+                var buttons = xButtonGroup.querySelectorAll('.btn[data-x]');
+                for (var i = 0; i < buttons.length; i++) {
+                    (function(btn) {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            var xValue = parseInt(btn.getAttribute('data-x'));
+                            console.log('X button clicked, value:', xValue);
+                            if (typeof window.setXValue === 'function') {
+                                window.setXValue(xValue);
+                            } else {
+                                console.error('setXValue function not available');
+                            }
+                        });
+                    })(buttons[i]);
+                }
+            } else {
+                console.warn('xButtonGroup not found');
+            }
+        }
+        
+        // Setup buttons as soon as DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupXButtons);
+        } else {
+            setupXButtons();
+        }
+        
+        // Initialize canvas after page load
+        window.addEventListener('load', function() {
+            // Setup X button handlers (in case they weren't set up earlier)
+            setupXButtons();
+            
+            // Wait a bit for area.js to load
+            setTimeout(function() {
+                if (typeof drawAll === 'function') {
+                    drawAll();
+                } else {
+                    console.error('drawAll function not found. Make sure area.js is loaded.');
+                }
+            }, 100);
+            
+            // Set initial selected button for X
+            setTimeout(function() {
+                if (currentX !== null && currentX !== 'null') {
+                    var xVal = typeof currentX === 'string' && currentX === 'null' ? null : parseInt(currentX);
+                    if (xVal !== null && !isNaN(xVal)) {
+                        if (typeof window.setXValue === 'function') {
+                            window.setXValue(xVal);
+                        }
+                    }
+                }
+            }, 200);
+            
+            // Setup R spinner change listener and block direct input
+            function setupRSpinner() {
+                var rInput = document.getElementById('mainForm:rValue_input');
+                if (rInput) {
+                    // Block direct keyboard input - only allow spinner buttons
+                    rInput.addEventListener('keydown', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    rInput.addEventListener('keypress', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    rInput.addEventListener('paste', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    
+                    // Listen for all input changes
+                    rInput.addEventListener('change', function() {
+                        setTimeout(window.updateCanvas, 50);
+                    });
+                    rInput.addEventListener('input', function() {
+                        setTimeout(window.updateCanvas, 50);
+                    });
+                    
+                    // Use MutationObserver to watch for value changes (for AJAX updates)
+                    var observer = new MutationObserver(function(mutations) {
+                        setTimeout(window.updateCanvas, 50);
+                    });
+                    observer.observe(rInput, {
+                        attributes: true,
+                        attributeFilter: ['value'],
+                        childList: false,
+                        subtree: false
+                    });
+                    
+                    // Watch for value property changes (polling for AJAX updates)
+                    var lastValue = rInput.value;
+                    var valueWatcher = setInterval(function() {
+                        if (rInput && rInput.value !== lastValue) {
+                            var newValue = rInput.value;
+                            console.log('R value watcher detected change:', lastValue, '->', newValue);
+                            lastValue = newValue;
+                            window.updateCanvas();
+                        }
+                    }, 50); // Check more frequently
+                    
+                    // Also listen for PrimeFaces spinner button clicks using event delegation
+                    // This works even if elements are replaced by AJAX
+                    document.addEventListener('click', function(e) {
+                        var target = e.target;
+                        // Check if clicked element is a spinner button
+                        if (target && (target.classList.contains('ui-spinner-up') || 
+                            target.classList.contains('ui-spinner-down') ||
+                            target.closest('.ui-spinner-up') || 
+                            target.closest('.ui-spinner-down'))) {
+                            // Check if it's the R spinner
+                            var spinnerContainer = document.getElementById('mainForm:rValue');
+                            if (spinnerContainer && (target.closest('#' + spinnerContainer.id) || 
+                                spinnerContainer.contains(target) ||
+                                target.closest('[id*="rValue"]'))) {
+                                console.log('Spinner button clicked, updating canvas...');
+                                // Use multiple timeouts to catch value after AJAX update
+                                setTimeout(window.updateCanvas, 50);
+                                setTimeout(window.updateCanvas, 150);
+                                setTimeout(window.updateCanvas, 300);
+                            }
+                        }
+                    });
+                    
+                    // Also listen directly on spinner container if it exists
+                    var spinnerContainer = document.getElementById('mainForm:rValue');
+                    if (spinnerContainer) {
+                        var upButton = spinnerContainer.querySelector('.ui-spinner-up');
+                        var downButton = spinnerContainer.querySelector('.ui-spinner-down');
+                        if (upButton) {
+                            upButton.addEventListener('click', function() {
+                                setTimeout(window.updateCanvas, 50);
+                                setTimeout(window.updateCanvas, 150);
+                                setTimeout(window.updateCanvas, 300);
+                            });
+                        }
+                        if (downButton) {
+                            downButton.addEventListener('click', function() {
+                                setTimeout(window.updateCanvas, 50);
+                                setTimeout(window.updateCanvas, 150);
+                                setTimeout(window.updateCanvas, 300);
+                            });
+                        }
+                    }
+                } else {
+                    // Retry if element not found yet
+                    setTimeout(setupRSpinner, 100);
+                }
+            }
+            
+            setTimeout(setupRSpinner, 100);
+        });
+        ]]>
+    </script>
+</body>
+</html>
+

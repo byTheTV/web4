@@ -1,0 +1,169 @@
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #6b7280;
+  --accent: #2563eb;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial;
+}
+
+header {
+  background: #0f172a;
+  color: #fff;
+  padding: 14px 20px;
+}
+
+header strong {
+  font-weight: 700;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+}
+
+.card > div {
+  padding: 16px 18px;
+}
+
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+}
+
+form label {
+  margin-right: 10px;
+}
+
+form > div {
+  margin-bottom: 12px;
+}
+
+input[type="text"] {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  width: 280px;
+}
+
+button {
+  padding: 10px 14px;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead {
+  background: #f3f4f6;
+}
+
+th,
+td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.zebra tbody tr:nth-child(odd) {
+  background: #fafafa;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+img#area {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+label.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+label.pill input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+}
+
+label.pill span {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #111827;
+  min-width: 36px;
+  text-align: center;
+}
+
+label.pill input:checked + span {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+label.pill input:focus + span {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+@media (max-width: 920px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+}

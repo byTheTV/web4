@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+    id 'war'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // APIs provided by WildFly (use providedCompile to avoid conflicts)
+    providedCompile 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    providedCompile 'jakarta.faces:jakarta.faces-api:4.0.1'
+    providedCompile 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
+    providedCompile 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    
+    // Third-party libraries (not provided by WildFly)
+    implementation 'org.primefaces:primefaces:13.0.0'
+    // ICEfaces removed - not used and causes compatibility issues with JSF 4.0
+    
+    // EclipseLink (JPA implementation - not provided by WildFly by default)
+    implementation 'org.eclipse.persistence:eclipselink:4.0.2'
+    
+    // PostgreSQL Driver
+    implementation 'org.postgresql:postgresql:42.7.1'
+    
+    // JSTL
+    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
+    
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+war {
+    archiveFileName = 'labwork2.war'
+}
+
+test {
+    useJUnitPlatform()
+}
