@@ -31,7 +31,7 @@ public class AreaCheckBean implements Serializable {
         ResultEntity result = new ResultEntity(x, y, r, hit, executionTimeStr);
         resultsBean.addResult(result);
         
-        return "main?faces-redirect=true";
+        return null; // Stay on same page to preserve form values
     }
     
     

@@ -311,22 +311,40 @@ function clickCanvas(ev) {
                    document.querySelector('input[type="text"][id*="yValue"]');
     if (yInput) {
         yInput.value = clampedY;
-        var yChangeEvent = new Event('change', { bubbles: true });
+        // Trigger multiple events to ensure JSF processes the value
+        var yChangeEvent = new Event('change', { bubbles: true, cancelable: true });
         yInput.dispatchEvent(yChangeEvent);
+        var yInputEvent = new Event('input', { bubbles: true, cancelable: true });
+        yInput.dispatchEvent(yInputEvent);
+        // Also trigger blur to ensure value is processed
+        yInput.focus();
+        setTimeout(function() {
+            yInput.blur();
+        }, 10);
     }
     
-    // Submit form via JSF
-    const form = document.getElementById('mainForm');
-    if (form) {
-        // Find the submit button and click it
-        const submitButton = form.querySelector('input[value="Проверить"], button[value="Проверить"]');
-        if (submitButton) {
-            submitButton.click();
-        } else {
-            // Fallback: submit form directly
-            form.submit();
+    // Wait a bit to ensure all values are set before submitting
+    setTimeout(function() {
+        // Submit form via JSF
+        const form = document.getElementById('mainForm');
+        if (form) {
+            // Try to find button by ID first
+            const checkButton = document.getElementById('mainForm:checkButton');
+            if (checkButton) {
+                // Trigger button click - JSF AJAX will handle it
+                checkButton.click();
+            } else {
+                // Fallback: try to find button by value
+                const submitButton = form.querySelector('input[value="Проверить"], button[value="Проверить"]');
+                if (submitButton) {
+                    submitButton.click();
+                } else {
+                    // Last resort: submit form directly (will cause full page reload)
+                    form.submit();
+                }
+            }
         }
-    }
+    }, 50);
 }
 
 window.addEventListener('load', function() {
