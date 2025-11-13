@@ -15,7 +15,7 @@ public class Config {
             BigDecimal.valueOf(5)
     );
 
-    static Set<Integer> getAllowedX() {
+    public static Set<Integer> getAllowedX() {
         return allowedX;
     }
 

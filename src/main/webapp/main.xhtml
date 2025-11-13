@@ -89,8 +89,9 @@
                     <button type="button" class="btn x-btn" data-x="2" onclick="selectXValue(2); return false;">2</button>
                     <button type="button" class="btn x-btn" data-x="3" onclick="selectXValue(3); return false;">3</button>
                 </div>
-                <h:inputHidden id="xValue" value="#{areaCheckBean.x}" required="true" requiredMessage="X is required">
+                <h:inputHidden id="xValue" value="#{areaCheckBean.x}" required="true" requiredMessage="X обязателен для ввода">
                     <f:convertNumber integerOnly="true"/>
+                    <f:validator validatorId="xValidator"/>
                 </h:inputHidden>
                 <h:message for="xValue" styleClass="error-message" id="xValueMessage"/>
             </div>
