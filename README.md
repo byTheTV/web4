@@ -44,7 +44,7 @@ CREATE DATABASE web3db;
 
 - Используется только PrimeFaces для компонента спиннера (p:spinner)
 
-
+```
 ┌─────────────────┐
 │   main.xhtml     │ (JSF View)
 └────────┬────────┘
@@ -77,3 +77,4 @@ CREATE DATABASE web3db;
 ┌─────────────────┐
 │ EntityManager   │
 └─────────────────┘
+```
