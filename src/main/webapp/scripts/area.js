@@ -223,15 +223,21 @@ function mouseMoveCanvas(ev) {
     } else if (typeof setXValue === 'function') {
         setXValue(x);
     } else {
-        console.warn('setXValue function not available');
-        // Fallback: try to set X value directly
-        var hiddenInput = document.getElementById('mainForm:xValue') || 
-                         document.querySelector('[id$=":xValue"]') ||
-                         document.querySelector('input[type="hidden"][id*="xValue"]');
-        if (hiddenInput) {
-            hiddenInput.value = x;
-            var changeEvent = new Event('change', { bubbles: true });
-            hiddenInput.dispatchEvent(changeEvent);
+        // Fallback: try to set X value directly and call selectXValue if available
+        if (typeof window.selectXValue === 'function') {
+            window.selectXValue(x);
+        } else if (typeof selectXValue === 'function') {
+            selectXValue(x);
+        } else {
+            // Last resort: set value directly
+            var hiddenInput = document.getElementById('mainForm:xValue') || 
+                             document.querySelector('[id$=":xValue"]') ||
+                             document.querySelector('input[type="hidden"][id*="xValue"]');
+            if (hiddenInput) {
+                hiddenInput.value = x;
+                var changeEvent = new Event('change', { bubbles: true });
+                hiddenInput.dispatchEvent(changeEvent);
+            }
         }
     }
     
@@ -283,15 +289,21 @@ function clickCanvas(ev) {
     } else if (typeof setXValue === 'function') {
         setXValue(x);
     } else {
-        console.warn('setXValue function not available');
-        // Fallback: try to set X value directly
-        var hiddenInput = document.getElementById('mainForm:xValue') || 
-                         document.querySelector('[id$=":xValue"]') ||
-                         document.querySelector('input[type="hidden"][id*="xValue"]');
-        if (hiddenInput) {
-            hiddenInput.value = x;
-            var changeEvent = new Event('change', { bubbles: true });
-            hiddenInput.dispatchEvent(changeEvent);
+        // Fallback: try selectXValue if available
+        if (typeof window.selectXValue === 'function') {
+            window.selectXValue(x);
+        } else if (typeof selectXValue === 'function') {
+            selectXValue(x);
+        } else {
+            // Last resort: set value directly
+            var hiddenInput = document.getElementById('mainForm:xValue') || 
+                             document.querySelector('[id$=":xValue"]') ||
+                             document.querySelector('input[type="hidden"][id*="xValue"]');
+            if (hiddenInput) {
+                hiddenInput.value = x;
+                var changeEvent = new Event('change', { bubbles: true });
+                hiddenInput.dispatchEvent(changeEvent);
+            }
         }
     }
     const yInput = document.getElementById('mainForm:yValue') ||

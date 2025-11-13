@@ -9,6 +9,7 @@
     <title>Лабораторная работа 2 - Проверка попадания точки</title>
     <h:outputStylesheet name="styles/reset.css"/>
     <h:outputStylesheet name="styles/main.css"/>
+    <script type="text/javascript" src="#{request.contextPath}/scripts/main.js"></script>
     <style>
         /* Fix for R spinner input visibility - apply to all possible selectors */
         body.main-page input[id*="rValue_input"],
@@ -78,20 +79,20 @@
             <div class="form-group">
                 <h:outputLabel value="X:"/>
                 <div class="button-group" id="xButtonGroup">
-                    <button type="button" class="btn" data-x="-5">-5</button>
-                    <button type="button" class="btn" data-x="-4">-4</button>
-                    <button type="button" class="btn" data-x="-3">-3</button>
-                    <button type="button" class="btn" data-x="-2">-2</button>
-                    <button type="button" class="btn" data-x="-1">-1</button>
-                    <button type="button" class="btn" data-x="0">0</button>
-                    <button type="button" class="btn" data-x="1">1</button>
-                    <button type="button" class="btn" data-x="2">2</button>
-                    <button type="button" class="btn" data-x="3">3</button>
+                    <button type="button" class="btn x-btn" data-x="-5" onclick="selectXValue(-5); return false;">-5</button>
+                    <button type="button" class="btn x-btn" data-x="-4" onclick="selectXValue(-4); return false;">-4</button>
+                    <button type="button" class="btn x-btn" data-x="-3" onclick="selectXValue(-3); return false;">-3</button>
+                    <button type="button" class="btn x-btn" data-x="-2" onclick="selectXValue(-2); return false;">-2</button>
+                    <button type="button" class="btn x-btn" data-x="-1" onclick="selectXValue(-1); return false;">-1</button>
+                    <button type="button" class="btn x-btn" data-x="0" onclick="selectXValue(0); return false;">0</button>
+                    <button type="button" class="btn x-btn" data-x="1" onclick="selectXValue(1); return false;">1</button>
+                    <button type="button" class="btn x-btn" data-x="2" onclick="selectXValue(2); return false;">2</button>
+                    <button type="button" class="btn x-btn" data-x="3" onclick="selectXValue(3); return false;">3</button>
                 </div>
                 <h:inputHidden id="xValue" value="#{areaCheckBean.x}" required="true" requiredMessage="X is required">
                     <f:convertNumber integerOnly="true"/>
                 </h:inputHidden>
-                <h:message for="xValue" styleClass="error-message"/>
+                <h:message for="xValue" styleClass="error-message" id="xValueMessage"/>
             </div>
             
             <div class="form-group">
@@ -142,45 +143,6 @@
         </p>
     </div>
     
-    <script type="text/javascript">
-        <![CDATA[
-        // Make setXValue globally accessible IMMEDIATELY (before area.js loads)
-        window.setXValue = function(x) {
-            console.log('setXValue called with:', x);
-            if (typeof currentX !== 'undefined') {
-                currentX = x;
-            }
-            
-            // Try multiple ways to find the hidden input (JSF may generate different IDs)
-            var hiddenInput = document.getElementById('mainForm:xValue') || 
-                             document.querySelector('[id$=":xValue"]') ||
-                             document.querySelector('input[type="hidden"][id*="xValue"]');
-            
-            if (hiddenInput) {
-                console.log('Found xValue input, setting value to:', x);
-                hiddenInput.value = x;
-                // Trigger change event to ensure JSF recognizes the change
-                var changeEvent = new Event('change', { bubbles: true });
-                hiddenInput.dispatchEvent(changeEvent);
-                // Also trigger input event
-                var inputEvent = new Event('input', { bubbles: true });
-                hiddenInput.dispatchEvent(inputEvent);
-                console.log('xValue input updated, current value:', hiddenInput.value);
-            } else {
-                console.warn('Could not find xValue input element. Tried: mainForm:xValue, [id$=":xValue"], input[type="hidden"][id*="xValue"]');
-            }
-            
-            // Update button selection for X - use helper function
-            if (typeof window.updateXButtonSelection === 'function') {
-                window.updateXButtonSelection(x);
-            }
-            
-            if (typeof window.updateCanvas === 'function') {
-                window.updateCanvas();
-            }
-        };
-        ]]>
-    </script>
     <script type="text/javascript" src="#{request.contextPath}/scripts/area.js"></script>
     
     <div class="form-section">
@@ -217,191 +179,10 @@
     
     <script>
         // Initialize variables - JSF expressions evaluated here
+        // These must stay in XHTML because they use JSF EL expressions
         var currentR = #{areaCheckBean.r != null ? areaCheckBean.r : 1.0};
         var currentX = #{areaCheckBean.x != null ? areaCheckBean.x : 'null'};
         var currentY = #{areaCheckBean.y != null ? areaCheckBean.y : 'null'};
-    </script>
-    <script>
-        <![CDATA[
-        // Parse number with locale support (handles both comma and dot as decimal separator)
-        function parseLocaleFloat(str) {
-            if (!str) return NaN;
-            // Convert to string, trim whitespace, replace comma with dot for parsing
-            var normalized = String(str).trim().replace(',', '.');
-            var result = parseFloat(normalized);
-            return isNaN(result) ? NaN : result;
-        }
-        
-        window.updateCanvas = function() {
-            var rInput = document.getElementById('mainForm:rValue_input');
-            if (rInput) {
-                var newR = parseLocaleFloat(rInput.value) || 1.0;
-                // Always update and redraw, even if value seems the same (in case of formatting issues)
-                var shouldLog = Math.abs(newR - currentR) > 0.001;
-                currentR = newR;
-                if (shouldLog) {
-                    console.log('updateCanvas: R value changed to:', currentR, 'input value:', rInput.value);
-                }
-            } else {
-                console.warn('updateCanvas: rInput not found');
-            }
-            // Always redraw, even if R didn't change (to ensure canvas is up to date)
-            if (typeof drawAll === 'function') {
-                drawAll();
-            } else {
-                console.warn('drawAll function not available');
-            }
-        };
-        
-        // Function to update X button visual state (make it global)
-        window.updateXButtonSelection = function(xValue) {
-            var xButtonGroup = document.getElementById('xButtonGroup');
-            if (!xButtonGroup) {
-                console.warn('xButtonGroup not found for selection update');
-                return;
-            }
-            var buttons = xButtonGroup.querySelectorAll('.btn[data-x]');
-            for (var i = 0; i < buttons.length; i++) {
-                var btn = buttons[i];
-                var btnXValue = parseInt(btn.getAttribute('data-x'));
-                if (!isNaN(btnXValue) && btnXValue === xValue) {
-                    // Select this button
-                    btn.classList.add('selected');
-                    btn.style.setProperty('background-color', '#2196F3', 'important');
-                    btn.style.setProperty('color', 'white', 'important');
-                    btn.style.setProperty('border-color', '#2196F3', 'important');
-                } else {
-                    // Deselect this button
-                    btn.classList.remove('selected');
-                    btn.style.removeProperty('background-color');
-                    btn.style.removeProperty('color');
-                    btn.style.removeProperty('border-color');
-                }
-            }
-        };
-        
-        // Setup X button click handlers using event delegation (works even after AJAX updates)
-        function setupXButtons() {
-            // Remove old listener if exists
-            if (window.xButtonClickHandler) {
-                document.removeEventListener('click', window.xButtonClickHandler);
-            }
-            
-            // Use event delegation on document level
-            window.xButtonClickHandler = function(e) {
-                var target = e.target;
-                // Check if clicked element is an X button or inside one
-                var btn = target.closest('#xButtonGroup .btn[data-x]');
-                if (btn) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var xValue = parseInt(btn.getAttribute('data-x'));
-                    console.log('X button clicked via delegation, value:', xValue);
-                    
-                    // Immediately update visual state
-                    if (typeof window.updateXButtonSelection === 'function') {
-                        window.updateXButtonSelection(xValue);
-                    }
-                    
-                    // Then update the form value
-                    if (typeof window.setXValue === 'function') {
-                        window.setXValue(xValue);
-                    } else {
-                        console.error('setXValue function not available');
-                    }
-                }
-            };
-            
-            document.addEventListener('click', window.xButtonClickHandler, true);
-            console.log('X button handlers set up using event delegation');
-        }
-        
-        // Setup buttons as soon as DOM is ready and also after page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupXButtons);
-        } else {
-            setupXButtons();
-        }
-        
-        // Initialize canvas after page load
-        window.addEventListener('load', function() {
-            // Setup X button handlers (in case they weren't set up earlier)
-            setTimeout(setupXButtons, 100);
-            
-            // Wait a bit for area.js to load
-            setTimeout(function() {
-                if (typeof drawAll === 'function') {
-                    drawAll();
-                } else {
-                    console.error('drawAll function not found. Make sure area.js is loaded.');
-                }
-            }, 100);
-            
-            // Set initial selected button for X
-            setTimeout(function() {
-                if (currentX !== null && currentX !== 'null') {
-                    var xVal = typeof currentX === 'string' && currentX === 'null' ? null : parseInt(currentX);
-                    if (xVal !== null && !isNaN(xVal)) {
-                        if (typeof window.setXValue === 'function') {
-                            window.setXValue(xVal);
-                        }
-                    }
-                }
-            }, 200);
-            
-            // Setup R spinner change listener
-            function setupRSpinner() {
-                var rInput = document.getElementById('mainForm:rValue_input');
-                if (rInput) {
-                    // Listen for all input changes
-                    rInput.addEventListener('change', function() {
-                        setTimeout(window.updateCanvas, 50);
-                    });
-                    rInput.addEventListener('input', function() {
-                        setTimeout(window.updateCanvas, 50);
-                    });
-                    
-                    // Watch for value property changes (polling for spinner button clicks)
-                    var lastValue = rInput.value;
-                    var valueWatcher = setInterval(function() {
-                        if (rInput && rInput.value !== lastValue) {
-                            var newValue = rInput.value;
-                            console.log('R value watcher detected change:', lastValue, '->', newValue);
-                            lastValue = newValue;
-                            window.updateCanvas();
-                        }
-                    }, 100);
-                    
-                    // Listen for PrimeFaces spinner button clicks using event delegation
-                    document.addEventListener('click', function(e) {
-                        var target = e.target;
-                        // Check if clicked element is a spinner button
-                        if (target && (target.classList.contains('ui-spinner-up') || 
-                            target.classList.contains('ui-spinner-down') ||
-                            target.closest('.ui-spinner-up') || 
-                            target.closest('.ui-spinner-down'))) {
-                            // Check if it's the R spinner
-                            var spinnerContainer = document.getElementById('mainForm:rValue');
-                            if (spinnerContainer && (target.closest('#' + spinnerContainer.id) || 
-                                spinnerContainer.contains(target) ||
-                                target.closest('[id*="rValue"]'))) {
-                                console.log('Spinner button clicked, updating canvas...');
-                                // Use multiple timeouts to catch value after update
-                                setTimeout(window.updateCanvas, 100);
-                                setTimeout(window.updateCanvas, 200);
-                                setTimeout(window.updateCanvas, 400);
-                            }
-                        }
-                    });
-                } else {
-                    // Retry if element not found yet
-                    setTimeout(setupRSpinner, 100);
-                }
-            }
-            
-            setTimeout(setupRSpinner, 100);
-        });
-        ]]>
     </script>
 </body>
 </html>

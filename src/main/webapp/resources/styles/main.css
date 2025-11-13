@@ -240,7 +240,8 @@ body.main-page .button-group {
 
 body.main-page .button-group .btn.selected,
 body.main-page #xButtonGroup .btn.selected,
-body.main-page .btn.selected {
+body.main-page .btn.selected,
+body.main-page .x-btn.selected {
   background: #2196F3 !important;
   color: white !important;
   border-color: #2196F3 !important;
@@ -248,9 +249,16 @@ body.main-page .btn.selected {
 
 body.main-page .button-group .btn.selected:hover,
 body.main-page #xButtonGroup .btn.selected:hover,
-body.main-page .btn.selected:hover {
+body.main-page .btn.selected:hover,
+body.main-page .x-btn.selected:hover {
   background: #1976D2 !important;
   border-color: #1976D2 !important;
+}
+
+/* Ensure x-btn buttons are styled correctly */
+body.main-page .x-btn {
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
 body.main-page .canvas-container {
