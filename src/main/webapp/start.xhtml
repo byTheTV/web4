@@ -5,43 +5,87 @@
 <h:head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta charset="UTF-8"/>
-    <title>Лабораторная работа 2 - Стартовая страница</title>
+    <title>Лабораторная работа 3 - Стартовая страница</title>
     <h:outputStylesheet name="styles/reset.css"/>
     <h:outputStylesheet name="styles/main.css"/>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        body.start-page {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #f6f7fb !important;
+            color: #0f172a !important;
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial;
         }
-        header {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
+        
+        body.start-page header {
+            background: #0f172a !important;
+            color: #ffffff !important;
+            padding: 14px 20px;
         }
-        .clock {
+        
+        body.start-page header h1 {
+            color: #ffffff !important;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        body.start-page header h1 * {
+            color: #ffffff !important;
+        }
+        
+        body.start-page main {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 30px;
+            padding: 40px 20px;
+            color: #0f172a !important;
+        }
+        
+        body.start-page main * {
+            color: #0f172a !important;
+        }
+        
+        body.start-page .clock {
             font-size: 24px;
             font-weight: bold;
-            color: #333;
             padding: 20px;
-            background: #e3f2fd;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 250px;
             text-align: center;
-            margin: 30px 0;
+            color: #0f172a !important;
         }
-        .link {
+        
+        body.start-page .clock * {
+            color: #0f172a !important;
+        }
+        
+        body.start-page .link {
             display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #2196F3;
-            color: white;
+            padding: 12px 24px;
+            background: #2563eb;
+            color: #ffffff !important;
             text-decoration: none;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.2s;
         }
-        .link:hover {
-            background: #1976D2;
+        
+        body.start-page .link * {
+            color: #ffffff !important;
+        }
+        
+        body.start-page .link:hover {
+            background: #1d4ed8;
         }
     </style>
     <script>
@@ -64,7 +108,7 @@
         };
     </script>
 </h:head>
-<body>
+<body class="start-page">
     <header>
         <h1>
             <h:outputText value="#{startPageBean.studentName}"/>

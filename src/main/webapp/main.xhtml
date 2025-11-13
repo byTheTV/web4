@@ -7,96 +7,70 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta charset="UTF-8"/>
     <title>Лабораторная работа 2 - Проверка попадания точки</title>
-    <link rel="stylesheet" type="text/css" href="#{request.contextPath}/styles/reset.css"/>
-    <link rel="stylesheet" type="text/css" href="#{request.contextPath}/styles/main.css"/>
+    <h:outputStylesheet name="styles/reset.css"/>
+    <h:outputStylesheet name="styles/main.css"/>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        /* Fix for R spinner input visibility - apply to all possible selectors */
+        body.main-page input[id*="rValue_input"],
+        body.main-page input.ui-spinner-input,
+        body.main-page input[id*="rValue"][id*="input"],
+        body.main-page .ui-spinner input[type="text"] {
+            text-align: left !important;
+            direction: ltr !important;
+            padding-left: 10px !important;
+            padding-right: 40px !important;
+            width: 150px !important;
+            min-width: 150px !important;
+            max-width: 150px !important;
+            color: #000000 !important;
+            background-color: #ffffff !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+            position: relative !important;
         }
-        .form-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        
+        body.main-page .ui-spinner {
+            display: inline-block !important;
+            width: auto !important;
+            vertical-align: middle !important;
         }
-        .form-group {
-            margin-bottom: 15px;
+        
+        body.main-page .ui-spinner .ui-spinner-input,
+        body.main-page .ui-spinner input {
+            width: 150px !important;
+            min-width: 150px !important;
+            max-width: 150px !important;
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+        
+        /* Ensure spinner buttons don't overlap text */
+        body.main-page .ui-spinner .ui-spinner-button {
+            position: absolute !important;
+            right: 0 !important;
         }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            padding: 8px 16px;
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background: #e0e0e0;
-        }
-        .button-group .btn.selected,
-        #xButtonGroup .btn.selected,
-        .btn.selected {
-            background: #2196F3 !important;
-            color: white !important;
-            border-color: #2196F3 !important;
-        }
-        .button-group .btn.selected:hover,
-        #xButtonGroup .btn.selected:hover,
-        .btn.selected:hover {
-            background: #1976D2 !important;
-            border-color: #1976D2 !important;
-        }
-        .canvas-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-        canvas {
-            border: 1px solid #ccc;
-            cursor: crosshair;
-            max-width: 100%;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ddd;
-        }
-        th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        .link {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #2196F3;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-        .link:hover {
-            background: #1976D2;
+        
+        /* Specific styles for R spinner */
+        body.main-page .r-spinner input,
+        body.main-page .r-spinner .ui-spinner-input,
+        body.main-page .r-spinner input[type="text"] {
+            text-align: left !important;
+            direction: ltr !important;
+            padding-left: 10px !important;
+            padding-right: 40px !important;
+            width: 150px !important;
+            min-width: 150px !important;
+            max-width: 150px !important;
+            color: #000000 !important;
+            background-color: #ffffff !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
         }
     </style>
 </h:head>
-<body>
+<body class="main-page">
     <h:form id="mainForm">
         <div class="form-section">
             <h2>Проверка попадания точки</h2>
@@ -129,7 +103,7 @@
                                          minimumMessage="Y must be at least -3.0"
                                          maximumMessage="Y must be at most 3.0"/>
                 </h:inputText>
-                <p style="margin-top: 5px; font-size: 12px; color: #666; font-style: italic;">
+                <p class="hint-text">
                     Диапазон: от -3 до 3
                 </p>
                 <h:message for="yValue" styleClass="error-message"/>
@@ -140,13 +114,14 @@
                 <p:spinner id="rValue" value="#{areaCheckBean.r}" 
                           min="0.1" max="3.0" stepFactor="0.1" 
                           required="true" requiredMessage="R is required"
-                          decimalPlaces="1">
+                          decimalPlaces="1"
+                          style="direction: ltr !important;"
+                          styleClass="r-spinner">
                     <f:validateDoubleRange minimum="0.1" maximum="3.0" 
                                          minimumMessage="R must be at least 0.1"
                                          maximumMessage="R must be at most 3.0"/>
-                    <p:ajax event="change" update="@this" oncomplete="if(typeof updateCanvas === 'function') { setTimeout(updateCanvas, 10); setTimeout(updateCanvas, 50); setTimeout(updateCanvas, 100); }"/>
                 </p:spinner>
-                <p style="margin-top: 5px; font-size: 12px; color: #666; font-style: italic;">
+                <p class="hint-text">
                     Шаг изменения: 0.1
                 </p>
                 <h:message for="rValue" styleClass="error-message"/>
@@ -160,9 +135,9 @@
     <div class="form-section">
         <h2>Область</h2>
         <div class="canvas-container">
-            <canvas id="area" width="400" height="400" style="border: 1px solid #ccc; display: block;"></canvas>
+            <canvas id="area" width="400" height="400"></canvas>
         </div>
-        <p style="color: #666; font-size: 14px;">
+        <p class="canvas-hint">
             Перемещайте курсор по графику для выбора X и Y. Клик для отправки формы.
         </p>
     </div>
@@ -374,24 +349,10 @@
                 }
             }, 200);
             
-            // Setup R spinner change listener and block direct input
+            // Setup R spinner change listener
             function setupRSpinner() {
                 var rInput = document.getElementById('mainForm:rValue_input');
                 if (rInput) {
-                    // Block direct keyboard input - only allow spinner buttons
-                    rInput.addEventListener('keydown', function(e) {
-                        e.preventDefault();
-                        return false;
-                    });
-                    rInput.addEventListener('keypress', function(e) {
-                        e.preventDefault();
-                        return false;
-                    });
-                    rInput.addEventListener('paste', function(e) {
-                        e.preventDefault();
-                        return false;
-                    });
-                    
                     // Listen for all input changes
                     rInput.addEventListener('change', function() {
                         setTimeout(window.updateCanvas, 50);
@@ -400,18 +361,7 @@
                         setTimeout(window.updateCanvas, 50);
                     });
                     
-                    // Use MutationObserver to watch for value changes (for AJAX updates)
-                    var observer = new MutationObserver(function(mutations) {
-                        setTimeout(window.updateCanvas, 50);
-                    });
-                    observer.observe(rInput, {
-                        attributes: true,
-                        attributeFilter: ['value'],
-                        childList: false,
-                        subtree: false
-                    });
-                    
-                    // Watch for value property changes (polling for AJAX updates)
+                    // Watch for value property changes (polling for spinner button clicks)
                     var lastValue = rInput.value;
                     var valueWatcher = setInterval(function() {
                         if (rInput && rInput.value !== lastValue) {
@@ -420,10 +370,9 @@
                             lastValue = newValue;
                             window.updateCanvas();
                         }
-                    }, 50); // Check more frequently
+                    }, 100);
                     
-                    // Also listen for PrimeFaces spinner button clicks using event delegation
-                    // This works even if elements are replaced by AJAX
+                    // Listen for PrimeFaces spinner button clicks using event delegation
                     document.addEventListener('click', function(e) {
                         var target = e.target;
                         // Check if clicked element is a spinner button
@@ -437,34 +386,13 @@
                                 spinnerContainer.contains(target) ||
                                 target.closest('[id*="rValue"]'))) {
                                 console.log('Spinner button clicked, updating canvas...');
-                                // Use multiple timeouts to catch value after AJAX update
-                                setTimeout(window.updateCanvas, 50);
-                                setTimeout(window.updateCanvas, 150);
-                                setTimeout(window.updateCanvas, 300);
+                                // Use multiple timeouts to catch value after update
+                                setTimeout(window.updateCanvas, 100);
+                                setTimeout(window.updateCanvas, 200);
+                                setTimeout(window.updateCanvas, 400);
                             }
                         }
                     });
-                    
-                    // Also listen directly on spinner container if it exists
-                    var spinnerContainer = document.getElementById('mainForm:rValue');
-                    if (spinnerContainer) {
-                        var upButton = spinnerContainer.querySelector('.ui-spinner-up');
-                        var downButton = spinnerContainer.querySelector('.ui-spinner-down');
-                        if (upButton) {
-                            upButton.addEventListener('click', function() {
-                                setTimeout(window.updateCanvas, 50);
-                                setTimeout(window.updateCanvas, 150);
-                                setTimeout(window.updateCanvas, 300);
-                            });
-                        }
-                        if (downButton) {
-                            downButton.addEventListener('click', function() {
-                                setTimeout(window.updateCanvas, 50);
-                                setTimeout(window.updateCanvas, 150);
-                                setTimeout(window.updateCanvas, 300);
-                            });
-                        }
-                    }
                 } else {
                     // Retry if element not found yet
                     setTimeout(setupRSpinner, 100);

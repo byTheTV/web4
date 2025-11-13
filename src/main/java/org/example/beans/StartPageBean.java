@@ -22,7 +22,7 @@ public class StartPageBean implements Serializable {
     }
     
     public String getVariantNumber() {
-        return "Вариант 6633";
+        return "Вариант 7348";
     }
     
     public String getCurrentDateTime() {
