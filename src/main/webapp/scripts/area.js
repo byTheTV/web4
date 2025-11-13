@@ -139,9 +139,9 @@ function drawPoints(ctx, scale) {
     rows.forEach(function(tr) {
         const tds = tr.querySelectorAll('td');
         if (tds.length < 5) return;
-        const x = parseFloat(tds[1].textContent);
-        const y = parseFloat(tds[2].textContent);
-        const r = parseFloat(tds[3].textContent);
+        const x = parseLocaleFloat(tds[1].textContent);
+        const y = parseLocaleFloat(tds[2].textContent);
+        const r = parseLocaleFloat(tds[3].textContent);
         const hitText = (tds[4].textContent || '').trim();
         const hit = hitText === 'Да' || hitText.toLowerCase() === 'yes' || hitText === 'true';
         
@@ -245,7 +245,7 @@ function mouseMoveCanvas(ev) {
                    document.querySelector('[id$=":yValue"]') ||
                    document.querySelector('input[type="text"][id*="yValue"]');
     if (yInput) {
-        yInput.value = clampedY.toFixed(2);
+        yInput.value = clampedY;
         var yChangeEvent = new Event('change', { bubbles: true });
         yInput.dispatchEvent(yChangeEvent);
     }
@@ -310,7 +310,7 @@ function clickCanvas(ev) {
                    document.querySelector('[id$=":yValue"]') ||
                    document.querySelector('input[type="text"][id*="yValue"]');
     if (yInput) {
-        yInput.value = clampedY.toFixed(2);
+        yInput.value = clampedY;
         var yChangeEvent = new Event('change', { bubbles: true });
         yInput.dispatchEvent(yChangeEvent);
     }
