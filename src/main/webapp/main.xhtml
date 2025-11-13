@@ -98,16 +98,17 @@
             <div class="form-group">
                 <h:outputLabel for="yValue" value="Y:"/>
                 <h:inputText id="yValue" value="#{areaCheckBean.y}" 
-                            required="true" requiredMessage="Y is required"
-                            converter="jakarta.faces.Double">
+                            required="true" requiredMessage="Y обязателен для ввода"
+                            converter="jakarta.faces.Double"
+                            oninput="validateYInput(this);">
                     <f:validateDoubleRange minimum="-3.0" maximum="3.0"
-                                         minimumMessage="Y must be at least -3.0"
-                                         maximumMessage="Y must be at most 3.0"/>
+                                         minimumMessage="Y должен быть не менее -3.0"
+                                         maximumMessage="Y должен быть не более 3.0"/>
                 </h:inputText>
                 <p class="hint-text">
                     Диапазон: от -3 до 3
                 </p>
-                <h:message for="yValue" styleClass="error-message"/>
+                <h:message for="yValue" styleClass="error-message" id="yValueMessage"/>
             </div>
             
             <div class="form-group">
@@ -129,8 +130,9 @@
             </div>
             
             <h:commandButton id="checkButton" value="Проверить" action="#{areaCheckBean.checkPoint()}">
-                <f:ajax execute="@form" render=":resultsTable" 
-                        oncomplete="setTimeout(function() { if (typeof drawAll === 'function') drawAll(); }, 100);"/>
+                <f:ajax execute="@form" render=":resultsTable yValueMessage" 
+                        oncomplete="setTimeout(function() { if (typeof drawAll === 'function') drawAll(); }, 100);"
+                        onerror="console.error('Validation error occurred');"/>
             </h:commandButton>
         </div>
     </h:form>
@@ -185,6 +187,60 @@
         var currentR = #{areaCheckBean.r != null ? areaCheckBean.r : 1.0};
         var currentX = #{areaCheckBean.x != null ? areaCheckBean.x : 'null'};
         var currentY = #{areaCheckBean.y != null ? areaCheckBean.y : 'null'};
+    </script>
+    <script>
+        // Client-side validation for Y input
+        function validateYInput(input) {
+            const value = parseFloat(input.value);
+            const minY = -3.0;
+            const maxY = 3.0;
+            const messageElement = document.getElementById('mainForm:yValueMessage') || 
+                                 document.querySelector('[id$=":yValueMessage"]');
+            
+            if (input.value.trim() === '') {
+                // Clear error if empty (required validation will handle it)
+                if (messageElement) {
+                    messageElement.textContent = '';
+                    messageElement.style.display = 'none';
+                }
+                input.style.borderColor = '';
+                return true;
+            }
+            
+            if (isNaN(value)) {
+                // Not a valid number
+                if (messageElement) {
+                    messageElement.textContent = 'Y должен быть числом';
+                    messageElement.style.display = 'block';
+                }
+                input.style.borderColor = '#b00020';
+                return false;
+            }
+            
+            // Check if value is out of range (using nested conditions to avoid XML parsing issues)
+            var isLessThanMin = value &lt; minY;
+            var isGreaterThanMax = value &gt; maxY;
+            if (isLessThanMin || isGreaterThanMax) {
+                // Out of range
+                if (messageElement) {
+                    messageElement.textContent = 'Y должен быть в диапазоне от ' + minY + ' до ' + maxY;
+                    messageElement.style.display = 'block';
+                }
+                input.style.borderColor = '#b00020';
+                return false;
+            }
+            
+            // Valid value
+            if (messageElement) {
+                messageElement.textContent = '';
+                messageElement.style.display = 'none';
+            }
+            input.style.borderColor = '';
+            return true;
+        }
+        
+        // Make function globally available
+        window.validateYInput = validateYInput;
     </script>
 </body>
 </html>
