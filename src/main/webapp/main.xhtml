@@ -11,7 +11,6 @@
     <h:outputStylesheet name="styles/main.css"/>
     <script type="text/javascript" src="#{request.contextPath}/scripts/main.js"></script>
     <style>
-        /* Fix for R spinner input visibility - apply to all possible selectors */
         body.main-page input[id*="rValue_input"],
         body.main-page input.ui-spinner-input,
         body.main-page input[id*="rValue"][id*="input"],
@@ -45,13 +44,11 @@
             max-width: 150px !important;
         }
         
-        /* Ensure spinner buttons don't overlap text */
         body.main-page .ui-spinner .ui-spinner-button {
             position: absolute !important;
             right: 0 !important;
         }
         
-        /* Specific styles for R spinner */
         body.main-page .r-spinner input,
         body.main-page .r-spinner .ui-spinner-input,
         body.main-page .r-spinner input[type="text"] {
@@ -131,28 +128,27 @@
             </div>
             
             <h:commandButton id="checkButton" value="Проверить" action="#{areaCheckBean.checkPoint()}">
-                <f:ajax execute="@form" render=":resultsTable yValueMessage" 
+                <f:ajax execute="@form" render="mainForm:resultsTable mainForm:yValueMessage mainForm:xValueMessage" 
                         oncomplete="setTimeout(function() { if (typeof drawAll === 'function') drawAll(); }, 100);"
                         onerror="console.error('Validation error occurred');"/>
             </h:commandButton>
         </div>
-    </h:form>
-    
-    <div class="form-section">
-        <h2>Область</h2>
-        <div class="canvas-container">
-            <canvas id="area" width="400" height="400"></canvas>
+        
+        <div class="form-section">
+            <h2>Область</h2>
+            <div class="canvas-container">
+                <canvas id="area" width="400" height="400"></canvas>
+            </div>
+            <p class="canvas-hint">
+                Перемещайте курсор по графику для выбора X и Y. Клик для отправки формы.
+            </p>
         </div>
-        <p class="canvas-hint">
-            Перемещайте курсор по графику для выбора X и Y. Клик для отправки формы.
-        </p>
-    </div>
-    
-    <script type="text/javascript" src="#{request.contextPath}/scripts/area.js"></script>
-    
-    <div class="form-section">
-        <h2>История проверок</h2>
-        <h:panelGroup id="resultsTable">
+        
+        <script type="text/javascript" src="#{request.contextPath}/scripts/area.js"></script>
+        
+        <div class="form-section">
+            <h2>История проверок</h2>
+            <h:panelGroup id="resultsTable">
             <h:dataTable value="#{resultsBean.results}" var="result" styleClass="results-table">
             <h:column>
                 <f:facet name="header">Время выполнения</f:facet>
@@ -178,19 +174,19 @@
             </h:column>
         </h:dataTable>
         </h:panelGroup>
-    </div>
+        </div>
+    </h:form>
     
     <h:link outcome="start" value="Вернуться на стартовую страницу" styleClass="link"/>
     
     <script>
-        // Initialize variables - JSF expressions evaluated here
-        // These must stay in XHTML because they use JSF EL expressions
+     
         var currentR = #{areaCheckBean.r != null ? areaCheckBean.r : 1.0};
         var currentX = #{areaCheckBean.x != null ? areaCheckBean.x : 'null'};
         var currentY = #{areaCheckBean.y != null ? areaCheckBean.y : 'null'};
     </script>
     <script>
-        // Client-side validation for Y input
+    
         function validateYInput(input) {
             const value = parseFloat(input.value);
             const minY = -3.0;
@@ -199,7 +195,6 @@
                                  document.querySelector('[id$=":yValueMessage"]');
             
             if (input.value.trim() === '') {
-                // Clear error if empty (required validation will handle it)
                 if (messageElement) {
                     messageElement.textContent = '';
                     messageElement.style.display = 'none';
@@ -209,7 +204,6 @@
             }
             
             if (isNaN(value)) {
-                // Not a valid number
                 if (messageElement) {
                     messageElement.textContent = 'Y должен быть числом';
                     messageElement.style.display = 'block';
@@ -218,11 +212,9 @@
                 return false;
             }
             
-            // Check if value is out of range (using nested conditions to avoid XML parsing issues)
             var isLessThanMin = value &lt; minY;
             var isGreaterThanMax = value &gt; maxY;
             if (isLessThanMin || isGreaterThanMax) {
-                // Out of range
                 if (messageElement) {
                     messageElement.textContent = 'Y должен быть в диапазоне от ' + minY + ' до ' + maxY;
                     messageElement.style.display = 'block';
@@ -231,7 +223,6 @@
                 return false;
             }
             
-            // Valid value
             if (messageElement) {
                 messageElement.textContent = '';
                 messageElement.style.display = 'none';
@@ -240,7 +231,6 @@
             return true;
         }
         
-        // Make function globally available
         window.validateYInput = validateYInput;
     </script>
 </body>

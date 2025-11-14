@@ -8,10 +8,7 @@ import org.example.service.AreaCalculationService;
 
 import java.io.Serializable;
 
-/**
- * Managed Bean - контроллер для формы проверки точки.
- * Отвечает только за связь с UI (JSF), вся бизнес-логика делегируется в Service.
- */
+
 @Named("areaCheckBean")
 @ViewScoped
 public class AreaCheckBean implements Serializable {
@@ -32,28 +29,42 @@ public class AreaCheckBean implements Serializable {
      * Делегирует расчет в Service, сохраняет результат через Service.
      */
     public String checkPoint() {
+        // Логирование для отладки
+        System.out.println("=== checkPoint() вызван ===");
+        System.out.println("X: " + x);
+        System.out.println("Y: " + y);
+        System.out.println("R: " + r);
+        
+        if (x == null || y == null || r == null) {
+            System.out.println("ОШИБКА: Одно из значений null!");
+            return null;
+        }
+        
         long startTime = System.nanoTime();
         
-        // Делегируем расчет попадания в Service
         boolean hit = calculationService.checkPoint(x, y, r);
         
         long endTime = System.nanoTime();
         long executionTime = endTime - startTime;
         String executionTimeStr = String.format("%.3f мс", executionTime / 1_000_000.0);
         
-        // Создаем DTO и сохраняем через ResultsBean (который обновит кэш)
+        System.out.println("Результат: hit = " + hit + ", время = " + executionTimeStr);
+        
         ResultDTO result = new ResultDTO(x, y, r, hit, executionTimeStr);
         resultsBean.addResult(result);
         
-        return null; // Stay on same page to preserve form values
+        System.out.println("Результат добавлен в resultsBean");
+        System.out.println("=== checkPoint() завершен ===");
+        
+        return null; 
     }
     
-    // Getters and Setters
     public Integer getX() {
         return x;
     }
     
     public void setX(Integer x) {
+        System.out.println("setX() вызван с значением: " + x);
         this.x = x;
     }
     
@@ -62,6 +73,7 @@ public class AreaCheckBean implements Serializable {
     }
     
     public void setY(Double y) {
+        System.out.println("setY() вызван с значением: " + y);
         this.y = y;
     }
     
@@ -70,12 +82,13 @@ public class AreaCheckBean implements Serializable {
     }
     
     public void setR(Double r) {
+        System.out.println("setR() вызван с значением: " + r);
         this.r = r;
     }
     
     public String setXValue(Integer x) {
         this.x = x;
-        return null; // Stay on same page
+        return null; 
     }
 }
 

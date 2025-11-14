@@ -13,7 +13,9 @@ public class XValidator implements Validator {
     
     @Override
     public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
+        System.out.println("XValidator.validate() вызван, value = " + value + " (type: " + (value != null ? value.getClass().getName() : "null") + ")");
         if (value == null) {
+            System.out.println("XValidator: value is null, throwing exception");
             throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR,
                     "Ошибка валидации", "Значение X обязательно для ввода"));
         }
@@ -31,10 +33,12 @@ public class XValidator implements Validator {
         }
         
         if (!Config.getAllowedX().contains(intValue)) {
+            System.out.println("XValidator: значение " + intValue + " не в списке разрешенных: " + Config.getAllowedX());
             throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR,
                     "Ошибка валидации", 
                     String.format("X должен быть одним из допустимых значений: %s", Config.getAllowedX())));
         }
+        System.out.println("XValidator: валидация прошла успешно для значения " + intValue);
     }
 }
 
