@@ -6,7 +6,7 @@
 <h:head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta charset="UTF-8"/>
-    <title>Лабораторная работа 2 - Проверка попадания точки</title>
+    <title>Лабораторная работа 3 - Проверка попадания точки</title>
     <h:outputStylesheet name="styles/reset.css"/>
     <h:outputStylesheet name="styles/main.css"/>
     <script type="text/javascript" src="#{request.contextPath}/scripts/main.js"></script>
@@ -127,6 +127,39 @@
                 <h:message for="rValue" styleClass="error-message"/>
             </div>
             
+            <div class="form-group">
+                <h:outputLabel for="typeSelect" value="Тип:"/>
+                <h:selectOneMenu id="typeSelect" value="#{areaCheckBean.type}" 
+                                required="true" requiredMessage="Тип обязателен для выбора">
+                    <f:selectItem itemValue="SPIDER" itemLabel="Паук"/>
+                    <f:selectItem itemValue="ANT" itemLabel="Муравей"/>
+                    <f:ajax event="change" render="spiderFields antFields" 
+                            oncomplete="updateTypeFields();"/>
+                </h:selectOneMenu>
+                <h:message for="typeSelect" styleClass="error-message"/>
+            </div>
+            
+            <h:panelGroup id="spiderFields">
+                <div class="form-group" style="display: #{areaCheckBean.type == 'SPIDER' ? 'block' : 'none'};">
+                    <h:outputLabel for="legsQuantity" value="Количество лапок (оставьте пустым для случайного):"/>
+                    <h:inputText id="legsQuantity" value="#{areaCheckBean.legsQuantity}" 
+                                converter="jakarta.faces.Integer">
+                        <f:validateLongRange minimum="1" maximum="1000"
+                                            minimumMessage="Количество лапок должно быть не менее 1"
+                                            maximumMessage="Количество лапок должно быть не более 1000"/>
+                    </h:inputText>
+                    <h:message for="legsQuantity" styleClass="error-message"/>
+                </div>
+            </h:panelGroup>
+            
+            <h:panelGroup id="antFields">
+                <div class="form-group" style="display: #{areaCheckBean.type == 'ANT' ? 'block' : 'none'};">
+                    <h:outputLabel for="bodyColor" value="Body Color (leave empty for random):"/>
+                    <h:inputText id="bodyColor" value="#{areaCheckBean.bodyColor}"/>
+                    <h:message for="bodyColor" styleClass="error-message"/>
+                </div>
+            </h:panelGroup>
+            
             <h:commandButton id="checkButton" value="Проверить" action="#{areaCheckBean.checkPoint()}">
                 <f:ajax execute="@form" render="mainForm:resultsTable mainForm:yValueMessage mainForm:xValueMessage" 
                         oncomplete="setTimeout(function() { if (typeof drawAll === 'function') drawAll(); }, 100);"
@@ -172,6 +205,18 @@
                 <f:facet name="header">Попадание</f:facet>
                 <h:outputText value="#{result.hit ? 'Да' : 'Нет'}"/>
             </h:column>
+            <h:column>
+                <f:facet name="header">Тип</f:facet>
+                <h:outputText value="#{result.type == 'SPIDER' ? 'Паук' : (result.type == 'ANT' ? 'Муравей' : 'Неизвестно')}"/>
+            </h:column>
+            <h:column rendered="#{result.type == 'SPIDER'}">
+                <f:facet name="header">Legs Quantity</f:facet>
+                <h:outputText value="#{result.legsQuantity}"/>
+            </h:column>
+            <h:column rendered="#{result.type == 'ANT'}">
+                <f:facet name="header">Body Color</f:facet>
+                <h:outputText value="#{result.bodyColor}"/>
+            </h:column>
         </h:dataTable>
         </h:panelGroup>
         </div>
@@ -186,7 +231,7 @@
         var currentY = #{areaCheckBean.y != null ? areaCheckBean.y : 'null'};
     </script>
     <script>
-    
+    <![CDATA[
         function validateYInput(input) {
             const value = parseFloat(input.value);
             const minY = -3.0;
@@ -212,8 +257,8 @@
                 return false;
             }
             
-            var isLessThanMin = value &lt; minY;
-            var isGreaterThanMax = value &gt; maxY;
+            var isLessThanMin = value < minY;
+            var isGreaterThanMax = value > maxY;
             if (isLessThanMin || isGreaterThanMax) {
                 if (messageElement) {
                     messageElement.textContent = 'Y должен быть в диапазоне от ' + minY + ' до ' + maxY;
@@ -232,6 +277,37 @@
         }
         
         window.validateYInput = validateYInput;
+        
+        function updateTypeFields() {
+            var typeSelect = document.getElementById('mainForm:typeSelect') || 
+                           document.querySelector('[id$=":typeSelect"]');
+            var spiderFields = document.getElementById('mainForm:spiderFields') || 
+                              document.querySelector('[id$=":spiderFields"]');
+            var antFields = document.getElementById('mainForm:antFields') || 
+                           document.querySelector('[id$=":antFields"]');
+            
+            if (typeSelect && spiderFields && antFields) {
+                var selectedType = typeSelect.value;
+                if (selectedType === 'SPIDER') {
+                    spiderFields.style.display = 'block';
+                    antFields.style.display = 'none';
+                } else if (selectedType === 'ANT') {
+                    spiderFields.style.display = 'none';
+                    antFields.style.display = 'block';
+                }
+            }
+        }
+        
+        // Обновляем поля при изменении типа
+        document.addEventListener('DOMContentLoaded', function() {
+            var typeSelect = document.getElementById('mainForm:typeSelect') || 
+                           document.querySelector('[id$=":typeSelect"]');
+            if (typeSelect) {
+                typeSelect.addEventListener('change', updateTypeFields);
+                updateTypeFields(); // Инициализация при загрузке
+            }
+        });
+    ]]>
     </script>
 </body>
 </html>

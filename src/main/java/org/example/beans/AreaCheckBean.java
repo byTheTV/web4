@@ -7,6 +7,7 @@ import org.example.dto.ResultDTO;
 import org.example.service.AreaCalculationService;
 
 import java.io.Serializable;
+import java.util.Random;
 
 
 @Named("areaCheckBean")
@@ -23,6 +24,12 @@ public class AreaCheckBean implements Serializable {
     private Integer x;
     private Double y;
     private Double r = 1.0;
+    private String type = "SPIDER"; // "SPIDER" or "ANT"
+    private Integer legsQuantity; // для паука (опционально, если null - рандомное)
+    private String bodyColor; // для муравья (опционально, если null - рандомное)
+    
+    private static final Random random = new Random();
+    private static final String[] COLORS = {"black", "brown", "red", "orange", "yellow"};
     
     /**
      * Обрабатывает запрос на проверку точки.
@@ -50,7 +57,21 @@ public class AreaCheckBean implements Serializable {
         
         System.out.println("Результат: hit = " + hit + ", время = " + executionTimeStr);
         
-        ResultDTO result = new ResultDTO(x, y, r, hit, executionTimeStr);
+        // Генерация значений для специфичных полей
+        Integer finalLegsQuantity = legsQuantity;
+        String finalBodyColor = bodyColor;
+        
+        if ("SPIDER".equals(type)) {
+            if (finalLegsQuantity == null) {
+                finalLegsQuantity = random.nextInt(100) + 1; // от 1 до 100
+            }
+        } else if ("ANT".equals(type)) {
+            if (finalBodyColor == null || finalBodyColor.trim().isEmpty()) {
+                finalBodyColor = COLORS[random.nextInt(COLORS.length)];
+            }
+        }
+        
+        ResultDTO result = new ResultDTO(x, y, r, hit, executionTimeStr, type, finalLegsQuantity, finalBodyColor);
         resultsBean.addResult(result);
         
         System.out.println("Результат добавлен в resultsBean");
@@ -89,6 +110,30 @@ public class AreaCheckBean implements Serializable {
     public String setXValue(Integer x) {
         this.x = x;
         return null; 
+    }
+    
+    public String getType() {
+        return type;
+    }
+    
+    public void setType(String type) {
+        this.type = type;
+    }
+    
+    public Integer getLegsQuantity() {
+        return legsQuantity;
+    }
+    
+    public void setLegsQuantity(Integer legsQuantity) {
+        this.legsQuantity = legsQuantity;
+    }
+    
+    public String getBodyColor() {
+        return bodyColor;
+    }
+    
+    public void setBodyColor(String bodyColor) {
+        this.bodyColor = bodyColor;
     }
 }
 

@@ -25,7 +25,6 @@ public class CharacterEncodingFilter implements Filter {
                 System.out.println("X-Requested-With: " + httpRequest.getHeader("X-Requested-With"));
                 System.out.println("Content-Type: " + httpRequest.getContentType());
                 
-                // Логируем параметры
                 java.util.Enumeration<String> paramNames = httpRequest.getParameterNames();
                 while (paramNames.hasMoreElements()) {
                     String paramName = paramNames.nextElement();

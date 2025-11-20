@@ -3,10 +3,7 @@ package org.example.dto;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * DTO (Data Transfer Object) для передачи данных результата проверки точки
- * между слоями приложения без привязки к JPA сущности.
- */
+
 public class ResultDTO implements Serializable {
     private static final long serialVersionUID = 1L;
     
@@ -17,6 +14,9 @@ public class ResultDTO implements Serializable {
     private Boolean hit;
     private LocalDateTime timestamp;
     private String executionTime;
+    private String type; // "SPIDER" or "ANT"
+    private Integer legsQuantity; // для паука
+    private String bodyColor; // для муравья
     
     public ResultDTO() {
     }
@@ -30,6 +30,18 @@ public class ResultDTO implements Serializable {
         this.timestamp = LocalDateTime.now();
     }
     
+    public ResultDTO(Integer x, Double y, Double r, Boolean hit, String executionTime, String type, Integer legsQuantity, String bodyColor) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.hit = hit;
+        this.executionTime = executionTime;
+        this.timestamp = LocalDateTime.now();
+        this.type = type;
+        this.legsQuantity = legsQuantity;
+        this.bodyColor = bodyColor;
+    }
+    
     public ResultDTO(Long id, Integer x, Double y, Double r, Boolean hit, LocalDateTime timestamp, String executionTime) {
         this.id = id;
         this.x = x;
@@ -40,7 +52,6 @@ public class ResultDTO implements Serializable {
         this.executionTime = executionTime;
     }
     
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -95,6 +106,30 @@ public class ResultDTO implements Serializable {
     
     public void setExecutionTime(String executionTime) {
         this.executionTime = executionTime;
+    }
+    
+    public String getType() {
+        return type;
+    }
+    
+    public void setType(String type) {
+        this.type = type;
+    }
+    
+    public Integer getLegsQuantity() {
+        return legsQuantity;
+    }
+    
+    public void setLegsQuantity(Integer legsQuantity) {
+        this.legsQuantity = legsQuantity;
+    }
+    
+    public String getBodyColor() {
+        return bodyColor;
+    }
+    
+    public void setBodyColor(String bodyColor) {
+        this.bodyColor = bodyColor;
     }
 }
 

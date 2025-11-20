@@ -2,10 +2,10 @@ package org.example.mappers;
 
 import org.example.dto.ResultDTO;
 import org.example.entities.ResultEntity;
+import org.example.entities.SpiderResultEntity;
+import org.example.entities.AntResultEntity;
 
-/**
- * Mapper для конвертации между Entity (модель) и DTO (слой контроллера).
- */
+
 public class ResultMapper {
     
     /**
@@ -19,7 +19,7 @@ public class ResultMapper {
             return null;
         }
         
-        return new ResultDTO(
+        ResultDTO dto = new ResultDTO(
             entity.getId(),
             entity.getX(),
             entity.getY(),
@@ -28,6 +28,19 @@ public class ResultMapper {
             entity.getTimestamp(),
             entity.getExecutionTime()
         );
+        
+        // Определяем тип и заполняем специфичные поля
+        if (entity instanceof SpiderResultEntity) {
+            SpiderResultEntity spiderEntity = (SpiderResultEntity) entity;
+            dto.setType("SPIDER");
+            dto.setLegsQuantity(spiderEntity.getLegsQuantity());
+        } else if (entity instanceof AntResultEntity) {
+            AntResultEntity antEntity = (AntResultEntity) entity;
+            dto.setType("ANT");
+            dto.setBodyColor(antEntity.getBodyColor());
+        }
+        
+        return dto;
     }
     
     /**
@@ -41,14 +54,50 @@ public class ResultMapper {
             return null;
         }
         
-        ResultEntity entity = new ResultEntity();
-        entity.setId(dto.getId());
-        entity.setX(dto.getX());
-        entity.setY(dto.getY());
-        entity.setR(dto.getR());
-        entity.setHit(dto.getHit());
-        entity.setTimestamp(dto.getTimestamp() != null ? dto.getTimestamp() : java.time.LocalDateTime.now());
-        entity.setExecutionTime(dto.getExecutionTime());
+        String type = dto.getType();
+        if (type == null || type.isEmpty()) {
+            type = "SPIDER"; // значение по умолчанию
+        }
+        
+        ResultEntity entity;
+        if ("SPIDER".equals(type)) {
+            SpiderResultEntity spiderEntity = new SpiderResultEntity(
+                dto.getX(),
+                dto.getY(),
+                dto.getR(),
+                dto.getHit(),
+                dto.getExecutionTime(),
+                dto.getLegsQuantity()
+            );
+            spiderEntity.setId(dto.getId());
+            spiderEntity.setTimestamp(dto.getTimestamp() != null ? dto.getTimestamp() : java.time.LocalDateTime.now());
+            entity = spiderEntity;
+        } else if ("ANT".equals(type)) {
+            AntResultEntity antEntity = new AntResultEntity(
+                dto.getX(),
+                dto.getY(),
+                dto.getR(),
+                dto.getHit(),
+                dto.getExecutionTime(),
+                dto.getBodyColor()
+            );
+            antEntity.setId(dto.getId());
+            antEntity.setTimestamp(dto.getTimestamp() != null ? dto.getTimestamp() : java.time.LocalDateTime.now());
+            entity = antEntity;
+        } else {
+            // Fallback на SpiderResultEntity
+            SpiderResultEntity spiderEntity = new SpiderResultEntity(
+                dto.getX(),
+                dto.getY(),
+                dto.getR(),
+                dto.getHit(),
+                dto.getExecutionTime(),
+                dto.getLegsQuantity()
+            );
+            spiderEntity.setId(dto.getId());
+            spiderEntity.setTimestamp(dto.getTimestamp() != null ? dto.getTimestamp() : java.time.LocalDateTime.now());
+            entity = spiderEntity;
+        }
         
         return entity;
     }
@@ -64,13 +113,40 @@ public class ResultMapper {
             return null;
         }
         
-        return new ResultEntity(
-            dto.getX(),
-            dto.getY(),
-            dto.getR(),
-            dto.getHit(),
-            dto.getExecutionTime()
-        );
+        String type = dto.getType();
+        if (type == null || type.isEmpty()) {
+            type = "SPIDER"; // значение по умолчанию
+        }
+        
+        if ("SPIDER".equals(type)) {
+            return new SpiderResultEntity(
+                dto.getX(),
+                dto.getY(),
+                dto.getR(),
+                dto.getHit(),
+                dto.getExecutionTime(),
+                dto.getLegsQuantity()
+            );
+        } else if ("ANT".equals(type)) {
+            return new AntResultEntity(
+                dto.getX(),
+                dto.getY(),
+                dto.getR(),
+                dto.getHit(),
+                dto.getExecutionTime(),
+                dto.getBodyColor()
+            );
+        } else {
+            // Fallback на SpiderResultEntity
+            return new SpiderResultEntity(
+                dto.getX(),
+                dto.getY(),
+                dto.getR(),
+                dto.getHit(),
+                dto.getExecutionTime(),
+                dto.getLegsQuantity()
+            );
+        }
     }
 }
 

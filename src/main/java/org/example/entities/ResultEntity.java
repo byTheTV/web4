@@ -5,8 +5,8 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "results")
-public class ResultEntity implements Serializable {
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+public abstract class ResultEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,9 +30,10 @@ public class ResultEntity implements Serializable {
     private String executionTime;
     
     public ResultEntity() {
+        this.timestamp = LocalDateTime.now();
     }
     
-    public ResultEntity(Integer x, Double y, Double r, Boolean hit, String executionTime) {
+    protected ResultEntity(Integer x, Double y, Double r, Boolean hit, String executionTime) {
         this.x = x;
         this.y = y;
         this.r = r;
@@ -41,7 +42,7 @@ public class ResultEntity implements Serializable {
         this.timestamp = LocalDateTime.now();
     }
     
-    // Getters and Setters
+
     public Long getId() {
         return id;
     }
