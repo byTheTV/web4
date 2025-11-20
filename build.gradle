@@ -25,6 +25,7 @@ dependencies {
     providedCompile 'jakarta.faces:jakarta.faces-api:4.0.1'
     providedCompile 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
     providedCompile 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    providedCompile 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
     
     // Third-party libraries (not provided by WildFly)
     implementation 'org.primefaces:primefaces:13.0.0'
@@ -35,6 +36,10 @@ dependencies {
     
     // PostgreSQL Driver
     implementation 'org.postgresql:postgresql:42.7.1'
+    
+    // Hazelcast
+    // Основной артефакт содержит и сервер, и клиент
+    implementation 'com.hazelcast:hazelcast:5.3.6'
     
     // JSTL
     implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
