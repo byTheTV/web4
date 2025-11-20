@@ -17,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * REST API для просмотра данных из кэша и PostgreSQL.
- */
 @Path("/data")
 public class DataInfoResource {
     
@@ -29,10 +26,6 @@ public class DataInfoResource {
     @Inject
     private ResultRepository resultRepository;
     
-    /**
-     * Получить все данные из кэша Hazelcast.
-     * GET /api/cache
-     */
     @GET
     @Path("/cache")
     @Produces(MediaType.APPLICATION_JSON)
@@ -62,10 +55,7 @@ public class DataInfoResource {
         }
     }
     
-    /**
-     * Получить все данные из PostgreSQL.
-     * GET /api/database
-     */
+
     @GET
     @Path("/database")
     @Produces(MediaType.APPLICATION_JSON)
@@ -90,11 +80,7 @@ public class DataInfoResource {
                     .build();
         }
     }
-    
-    /**
-     * Получить статистику и сравнение данных из кэша и БД.
-     * GET /api/stats
-     */
+
     @GET
     @Path("/stats")
     @Produces(MediaType.APPLICATION_JSON)
@@ -102,7 +88,7 @@ public class DataInfoResource {
         try {
             Map<String, Object> stats = new HashMap<>();
             
-            // Информация о кэше
+
             boolean cacheAvailable = cacheService.isCacheAvailable();
             int cacheSize = 0;
             if (cacheAvailable) {
@@ -114,7 +100,7 @@ public class DataInfoResource {
             cacheInfo.put("size", cacheSize);
             stats.put("cache", cacheInfo);
             
-            // Информация о БД
+
             List<ResultEntity> dbEntities = resultRepository.findAll();
             int dbSize = dbEntities.size();
             
@@ -122,7 +108,7 @@ public class DataInfoResource {
             dbInfo.put("size", dbSize);
             stats.put("database", dbInfo);
             
-            // Сравнение
+
             Map<String, Object> comparison = new HashMap<>();
             comparison.put("synchronized", cacheAvailable && cacheSize == dbSize);
             comparison.put("difference", Math.abs(cacheSize - dbSize));
@@ -138,10 +124,7 @@ public class DataInfoResource {
         }
     }
     
-    /**
-     * Получить все данные из обоих источников для сравнения.
-     * GET /api/all
-     */
+
     @GET
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
@@ -149,7 +132,6 @@ public class DataInfoResource {
         try {
             Map<String, Object> response = new HashMap<>();
             
-            // Данные из кэша
             List<ResultDTO> cacheData = cacheService.isCacheAvailable() 
                     ? cacheService.getAll() 
                     : List.of();
@@ -159,7 +141,6 @@ public class DataInfoResource {
                 "data", cacheData
             ));
             
-            // Данные из БД
             List<ResultEntity> dbEntities = resultRepository.findAll();
             List<ResultDTO> dbData = dbEntities.stream()
                     .map(ResultMapper::toDTO)
