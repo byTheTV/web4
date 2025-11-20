@@ -1,3 +1,36 @@
+
+# REST API для просмотра данных
+
+#### Доступные endpoints:
+
+1. **GET `/api/data/cache`** - получить все данные из кэша Hazelcast
+   ```bash
+   curl http://localhost:8080/labwork2/api/data/cache
+   ```
+
+
+2. **GET `/api/data/database`** - получить все данные из PostgreSQL
+   ```bash
+   curl http://localhost:8080/labwork2/api/data/database
+   ```
+
+
+3. **GET `/api/data/stats`** - получить статистику и сравнение
+   ```bash
+   curl http://localhost:8080/labwork2/api/data/stats
+   ```
+
+
+4. **GET `/api/data/all`** - получить все данные из обоих источников
+   ```bash
+   curl http://localhost:8080/labwork2/api/data/all
+   ```
+   Ответ содержит данные из кэша и БД для сравнения.
+
+
+
+
+
 # Common
 
 ```bash
@@ -61,56 +94,43 @@ CREATE DATABASE web3db;
 
 Приложение использует многослойную архитектуру с четким разделением ответственности:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ ПРЕДСТАВЛЕНИЯ (View Layer)                        │
-│  - main.xhtml, start.xhtml (JSF страницы)               │
-└──────────────────┬──────────────────────────────────────┘
-                   │ JSF Expression Language (#{bean})
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ КОНТРОЛЛЕРА (Controller Layer)                    │
-│  - AreaCheckBean, ResultsBean (Managed Beans)          │
-│  Только связь с UI, делегирует работу в Service         │
-└──────────────────┬──────────────────────────────────────┘
-                   │ @Inject
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ DTO (Data Transfer Object)                        │
-│  - ResultDTO (чистые данные, без JPA аннотаций)         │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ СЕРВИСА (Service Layer)                           │
-│  - AreaCalculationService (бизнес-логика расчета)       │
-│  - ResultService (координация, конвертация)             │
-└──────────────────┬──────────────────────────────────────┘
-                   │ @Inject
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ МАППИНГА (Mapping Layer)                          │
-│  - ResultMapper (конвертация Entity ↔ DTO)              │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ РЕПОЗИТОРИЯ (Repository Layer)                   │
-│  - ResultRepository (работа с EntityManager)            │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ МОДЕЛИ (Model Layer)                              │
-│  - ResultEntity (JPA Entity для работы с БД)            │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  СЛОЙ ПЕРСИСТЕНТНОСТИ (Persistence Layer)              │
-│  - EntityManager, PostgreSQL                            │
-└─────────────────────────────────────────────────────────┘
-```
+**1. Слой представления (View Layer)**
+- Файлы: `main.xhtml`, `start.xhtml` (JSF страницы)
+- Связь с контроллерами через JSF Expression Language (#{bean})
+
+**2. Слой контроллера (Controller Layer)**
+- Компоненты: `AreaCheckBean`, `ResultsBean` (Managed Beans)
+- Ответственность: только связь с UI, делегирует работу в Service
+
+**3. Слой DTO (Data Transfer Object)**
+- Компоненты: `ResultDTO`
+- Ответственность: чистые данные, без JPA аннотаций
+
+**4. Слой сервиса (Service Layer)**
+- Компоненты: `AreaCalculationService`, `ResultService`, `CacheService`
+- Ответственность: бизнес-логика расчета, координация работы с данными, кеширование
+
+**5. Слой маппинга (Mapping Layer)**
+- Компоненты: `ResultMapper`
+- Ответственность: конвертация Entity ↔ DTO
+
+**6. Слой репозитория (Repository Layer)**
+- Компоненты: `ResultRepository`
+- Ответственность: работа с EntityManager и транзакциями
+
+**7. Слой модели (Model Layer)**
+- Компоненты: `ResultEntity`, `SpiderResultEntity`, `AntResultEntity`
+- Ответственность: JPA Entity для работы с БД
+
+**8. Слой персистентности (Persistence Layer)**
+- Компоненты: EntityManager, PostgreSQL, Hazelcast
+- Ответственность: хранение данных
+
+**Поток данных при записи:**
+View → Controller → DTO → Service → Mapper → Repository → Entity → PostgreSQL → CacheService → Hazelcast
+
+**Поток данных при чтении:**
+View → Controller → Service → CacheService → Hazelcast (или fallback на PostgreSQL через Repository)
 
 ## Взаимодействие компонентов на бэке
 
@@ -238,7 +258,6 @@ CREATE DATABASE web3db;
    Скачать `hazelcast-5.3.6.jar` с официального сайта:
    ```bash
       https://repo1.maven.org/maven2/com/hazelcast/hazelcast/5.3.6/hazelcast-5.3.6.jar
-
    ```
 
 2. **Запустить Hazelcast сервер (отдельно от WildFly):**
@@ -318,64 +337,3 @@ CREATE DATABASE web3db;
 - `Result cached with key: ...` - результат сохранен в кеш
 - `Cache initialized with X results from database` - кеш загружен из БД
 - `Cache cleared` - кеш очищен
-
-### REST API для просмотра данных
-
-Добавлены REST endpoints для просмотра данных из кэша и PostgreSQL:
-
-#### Доступные endpoints:
-
-1. **GET `/api/data/cache`** - получить все данные из кэша Hazelcast
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/cache
-   ```
-   Ответ:
-   ```json
-   {
-     "available": true,
-     "size": 5,
-     "data": [...]
-   }
-   ```
-
-2. **GET `/api/data/database`** - получить все данные из PostgreSQL
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/database
-   ```
-   Ответ:
-   ```json
-   {
-     "size": 5,
-     "data": [...]
-   }
-   ```
-
-3. **GET `/api/data/stats`** - получить статистику и сравнение
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/stats
-   ```
-   Ответ:
-   ```json
-   {
-     "cache": {
-       "available": true,
-       "size": 5
-     },
-     "database": {
-       "size": 5
-     },
-     "comparison": {
-       "synchronized": true,
-       "difference": 0
-     }
-   }
-   ```
-
-4. **GET `/api/data/all`** - получить все данные из обоих источников
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/all
-   ```
-   Ответ содержит данные из кэша и БД для сравнения.
-
-**Примечание:** Замените `labwork2` на имя вашего WAR файла, если оно отличается.
-
