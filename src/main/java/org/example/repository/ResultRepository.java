@@ -1,5 +1,10 @@
 package org.example.repository;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.example.entities.ResultEntity;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -7,10 +12,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.Query;
-import org.example.entities.ResultEntity;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Repository слой - отвечает только за работу с базой данных.
@@ -37,10 +38,7 @@ public class ResultRepository {
             emf.close();
         }
     }
-    
-    /**
-     * Сохраняет результат в БД.
-     */
+
     public void save(ResultEntity entity) {
         try {
             em.getTransaction().begin();
@@ -54,9 +52,6 @@ public class ResultRepository {
         }
     }
     
-    /**
-     * Получает все результаты из БД, отсортированные по времени.
-     */
     @SuppressWarnings("unchecked")
     public List<ResultEntity> findAll() {
         try {
@@ -67,9 +62,6 @@ public class ResultRepository {
         }
     }
     
-    /**
-     * Удаляет все результаты из БД.
-     */
     public void deleteAll() {
         try {
             em.getTransaction().begin();
