@@ -1,114 +1,60 @@
 package org.example.service;
 
+import org.example.dto.ResultResponse;
+import org.example.entity.Result;
+import org.example.entity.User;
+import org.example.repository.ResultRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.example.dto.ResultDTO;
-import org.example.entities.ResultEntity;
-import org.example.mappers.ResultMapper;
-import org.example.repository.ResultRepository;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-
-/**
- * Service слой - содержит бизнес-логику работы с результатами.
- * Использует паттерн Write-Through: запись в кеш и БД, чтение только из кеша.
- * Не является managed bean для JSF, но является CDI бином.
- */
-@ApplicationScoped
+@Service
 public class ResultService {
     
-    @Inject
-    private ResultRepository repository;
+    @Autowired
+    private ResultRepository resultRepository;
     
-    @Inject
-    private CacheService cacheService;
+    @Autowired
+    private AreaCalculationService areaCalculationService;
     
-
-    @PostConstruct
-    public void init() {
-        try {
-            System.out.println("ResultService: Initializing cache from database...");
-            cacheService.initializeFromDatabase();
-        } catch (Exception e) {
-            System.err.println("ResultService: Failed to initialize cache from database: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public ResultResponse checkPoint(Double x, Double y, Double r, User user) {
+        long startTime = System.nanoTime();
+        boolean hit = areaCalculationService.checkPoint(x, y, r);
+        long endTime = System.nanoTime();
+        long executionTime = endTime - startTime;
+        String executionTimeStr = String.format("%.3f мс", executionTime / 1_000_000.0);
+        
+        Result result = new Result();
+        result.setX(x);
+        result.setY(y);
+        result.setR(r);
+        result.setHit(hit);
+        result.setExecutionTime(executionTimeStr);
+        result.setUser(user);
+        
+        result = resultRepository.save(result);
+        
+        return convertToResponse(result);
     }
     
-    public void addResult(ResultDTO resultDTO) {
-        try {
-            ResultEntity entity = ResultMapper.toEntityForSave(resultDTO);
-            repository.save(entity);
-            
-            resultDTO.setId(entity.getId());
-            resultDTO.setTimestamp(entity.getTimestamp());
-            
-            cacheService.put(entity.getId(), resultDTO);
-            
-            System.out.println("ResultService: Result saved to DB and cache, ID: " + entity.getId());
-        } catch (Exception e) {
-            System.err.println("ResultService: Error adding result: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to add result to database", e);
-        }
+    public List<ResultResponse> getResultsByUser(User user) {
+        return resultRepository.findByUserIdOrderByTimestampDesc(user.getId())
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
     
-
-    public List<ResultDTO> getAllResults() {
-        try {
-            if (cacheService.isCacheAvailable()) {
-                List<ResultDTO> cachedResults = cacheService.getAll();
-                if (cachedResults != null && !cachedResults.isEmpty()) {
-                    System.out.println("ResultService: Retrieved " + cachedResults.size() + " results from cache");
-                    return cachedResults;
-                }
-            }
-            
-            System.out.println("ResultService: Cache unavailable or empty, falling back to database");
-            List<ResultEntity> entities = repository.findAll();
-            List<ResultDTO> results = entities.stream()
-                    .map(ResultMapper::toDTO)
-                    .collect(Collectors.toList());
-            
-            if (cacheService.isCacheAvailable() && !results.isEmpty()) {
-                try {
-                    cacheService.clear();
-                    for (ResultDTO dto : results) {
-                        if (dto.getId() != null) {
-                            cacheService.put(dto.getId(), dto);
-                        }
-                    }
-                    System.out.println("ResultService: Cache restored from database");
-                } catch (Exception e) {
-                    System.err.println("ResultService: Failed to restore cache: " + e.getMessage());
-                }
-            }
-            
-            return results;
-        } catch (Exception e) {
-            System.err.println("ResultService: Error getting all results: " + e.getMessage());
-            e.printStackTrace();
-            return List.of(); 
-        }
-    }
-    
-    public void clearAllResults() {
-        try {
-            repository.deleteAll();
-            
-            if (cacheService.isCacheAvailable()) {
-                cacheService.clear();
-            }
-            
-            System.out.println("ResultService: All results cleared from DB and cache");
-        } catch (Exception e) {
-            System.err.println("ResultService: Error clearing all results: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to clear all results", e);
-        }
+    private ResultResponse convertToResponse(Result result) {
+        return new ResultResponse(
+                result.getId(),
+                result.getX(),
+                result.getY(),
+                result.getR(),
+                result.getHit(),
+                result.getTimestamp(),
+                result.getExecutionTime()
+        );
     }
 }
-

@@ -1,0 +1,45 @@
+.canvas-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+}
+
+.area-canvas {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: crosshair;
+}
+
+/* Desktop: >= 1266px */
+@media (min-width: 1266px) {
+  .area-canvas {
+    width: 500px;
+    height: 500px;
+  }
+}
+
+/* Tablet: 714px - 1265px */
+@media (min-width: 714px) and (max-width: 1265px) {
+  .area-canvas {
+    width: 400px;
+    height: 400px;
+  }
+}
+
+/* Mobile: < 714px */
+@media (max-width: 713px) {
+  .canvas-container {
+    padding: 10px;
+  }
+  
+  .area-canvas {
+    width: 100%;
+    max-width: 350px;
+    height: 350px;
+  }
+}
+

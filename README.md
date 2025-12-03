@@ -1,339 +1,132 @@
+# Лабораторная работа - Проверка попадания точки в область
 
-# REST API для просмотра данных
+Приложение для проверки попадания точки в заданную область на координатной плоскости.
 
-#### Доступные endpoints:
+## Технологии
 
-1. **GET `/api/data/cache`** - получить все данные из кэша Hazelcast
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/cache
+### Back-end
+- Spring Boot 3.2.0
+- Spring Data JPA
+- Spring Security с JWT аутентификацией
+- Oracle Database
+- Java 17
+
+### Front-end
+- React 18.2.0
+- Redux Toolkit
+- PrimeReact
+- Axios
+
+## Структура проекта
+
+```
+.
+├── src/main/java/org/example/          # Back-end код
+│   ├── AreaCheckApplication.java       # Главный класс приложения
+│   ├── config/                         # Конфигурация
+│   ├── controller/                     # REST контроллеры
+│   ├── dto/                            # Data Transfer Objects
+│   ├── entity/                         # JPA сущности
+│   ├── repository/                     # Spring Data репозитории
+│   ├── security/                       # Spring Security конфигурация
+│   ├── service/                        # Бизнес-логика
+│   └── validator/                      # Валидаторы
+├── frontend/                           # React приложение
+│   ├── public/
+│   └── src/
+│       ├── api/                        # API клиент
+│       ├── components/                  # React компоненты
+│       ├── pages/                      # Страницы
+│       └── store/                      # Redux store
+└── build.gradle                        # Gradle конфигурация
+```
+
+## Настройка и запуск
+
+### Требования
+- Java 17 или выше
+- Node.js 16 или выше
+- Oracle Database
+- Gradle 7.5 или выше
+
+### Настройка базы данных
+
+1. Создайте базу данных Oracle
+2. Обновите настройки в `src/main/resources/application.properties`:
+   ```properties
+   spring.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+   spring.datasource.username=your_username
+   spring.datasource.password=your_password
    ```
 
-
-2. **GET `/api/data/database`** - получить все данные из PostgreSQL
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/database
+3. Обновите JWT секрет (рекомендуется использовать длинный случайный ключ):
+   ```properties
+   jwt.secret=your-secret-key-change-this-in-production-min-256-bits
    ```
 
-
-3. **GET `/api/data/stats`** - получить статистику и сравнение
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/stats
-   ```
-
-
-4. **GET `/api/data/all`** - получить все данные из обоих источников
-   ```bash
-   curl http://localhost:8080/labwork2/api/data/all
-   ```
-   Ответ содержит данные из кэша и БД для сравнения.
-
-
-
-
-
-# Common
+### Запуск Back-end
 
 ```bash
-C:\wildfly\standalone\deployments
-D:\.javaproj\web3\build\libs
-
-./gradlew clean war
-java -jar hazelcast-5.3.6.jar
- C:\wildfly\bin\standalone.bat -b 0.0.0.0 
+# Из корневой директории проекта
+./gradlew bootRun
 ```
 
-```sql
-CREATE DATABASE web3db;
+Или используйте IDE для запуска `AreaCheckApplication`.
+
+Back-end будет доступен по адресу: `http://localhost:8080`
+
+### Запуск Front-end
+
+```bash
+# Перейдите в директорию frontend
+cd frontend
+
+# Установите зависимости
+npm install
+
+# Запустите приложение
+npm start
 ```
 
-2. `src/main/resources/META-INF/persistence.xml`:
-   - URL: `jdbc:postgresql://localhost:5432/web3db`
-   - User: `postgres`
-   - Password: `postgres`
+Front-end будет доступен по адресу: `http://localhost:3000`
 
+## Использование
 
-# Я в роли SA xdxd
+1. Откройте браузер и перейдите на `http://localhost:3000`
+2. Зарегистрируйте нового пользователя или войдите с существующими учетными данными
+3. На основной странице:
+   - Выберите координату X из списка: -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2
+   - Введите координату Y (от -3 до 3)
+   - Выберите радиус R из списка: -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2
+   - Нажмите "Проверить" или кликните на графике для выбора координат
+4. Результаты проверки отображаются в таблице ниже
 
-### Facelets шаблоны:
-- `start.xhtml` - стартовая страница с часами и ссылкой на основную страницу
-- `main.xhtml` - основная страница приложения с формой, графиком и таблицей результатов
+## Адаптивный дизайн
 
-### Managed Beans (Контроллеры):
-- `StartPageBean` (`@RequestScoped`) - управляет данными стартовой страницы
-- `AreaCheckBean` (`@ViewScoped`) - контроллер формы проверки точки (только связь с UI)
-- `ResultsBean` (`@SessionScoped`) - контроллер для отображения результатов (только связь с UI)
+Приложение поддерживает три режима отображения:
 
-### Service слой (Бизнес-логика):
-- `AreaCalculationService` (`@ApplicationScoped`) - содержит логику расчета попадания точки в область
-- `ResultService` (`@ApplicationScoped`) - координирует работу с результатами, конвертирует DTO ↔ Entity
+- **Десктопный** (≥ 1266px): Полная версия с двумя колонками
+- **Планшетный** (714px - 1265px): Одноколоночная версия
+- **Мобильный** (< 714px): Компактная версия для мобильных устройств
 
-### Repository слой (Работа с БД):
-- `ResultRepository` (`@ApplicationScoped`) - отвечает только за работу с базой данных через JPA
+## API Endpoints
 
-### DTO слой (Data Transfer Object):
-- `ResultDTO` - объект для передачи данных между слоями без привязки к JPA
+### Аутентификация
+- `POST /api/auth/login` - Вход
+- `POST /api/auth/register` - Регистрация
 
-### Entity слой (JPA):
-- `ResultEntity` - JPA сущность для хранения результатов в PostgreSQL
+### Проверка точки
+- `POST /api/area/check` - Проверить точку (требует аутентификации)
+- `GET /api/area/results` - Получить результаты пользователя (требует аутентификации)
 
-### Mapper слой:
-- `ResultMapper` - конвертирует между Entity (модель) и DTO (слой контроллера)
+### Валидация
+- `GET /api/validation/allowed-x` - Получить допустимые значения X
+- `GET /api/validation/allowed-r` - Получить допустимые значения R
+- `GET /api/validation/y-range` - Получить диапазон Y
 
-### Валидаторы:
-- `XValidator` - валидация значения X (-5 до 3)
-- `YValidator` - валидация значения Y (-3 до 3)
-- `RValidator` - валидация значения R (0.1 до 3)
+## Область проверки
 
-### Конфигурация:
-- `faces-config.xml` - правила навигации между страницами
-- `persistence.xml` - конфигурация EclipseLink для PostgreSQL
-- `beans.xml` - конфигурация CDI
-- `web.xml` - конфигурация JSF
-
-## Архитектура приложения
-
-Приложение использует многослойную архитектуру с четким разделением ответственности:
-
-**1. Слой представления (View Layer)**
-- Файлы: `main.xhtml`, `start.xhtml` (JSF страницы)
-- Связь с контроллерами через JSF Expression Language (#{bean})
-
-**2. Слой контроллера (Controller Layer)**
-- Компоненты: `AreaCheckBean`, `ResultsBean` (Managed Beans)
-- Ответственность: только связь с UI, делегирует работу в Service
-
-**3. Слой DTO (Data Transfer Object)**
-- Компоненты: `ResultDTO`
-- Ответственность: чистые данные, без JPA аннотаций
-
-**4. Слой сервиса (Service Layer)**
-- Компоненты: `AreaCalculationService`, `ResultService`, `CacheService`
-- Ответственность: бизнес-логика расчета, координация работы с данными, кеширование
-
-**5. Слой маппинга (Mapping Layer)**
-- Компоненты: `ResultMapper`
-- Ответственность: конвертация Entity ↔ DTO
-
-**6. Слой репозитория (Repository Layer)**
-- Компоненты: `ResultRepository`
-- Ответственность: работа с EntityManager и транзакциями
-
-**7. Слой модели (Model Layer)**
-- Компоненты: `ResultEntity`, `SpiderResultEntity`, `AntResultEntity`
-- Ответственность: JPA Entity для работы с БД
-
-**8. Слой персистентности (Persistence Layer)**
-- Компоненты: EntityManager, PostgreSQL, Hazelcast
-- Ответственность: хранение данных
-
-**Поток данных при записи:**
-View → Controller → DTO → Service → Mapper → Repository → Entity → PostgreSQL → CacheService → Hazelcast
-
-**Поток данных при чтении:**
-View → Controller → Service → CacheService → Hazelcast (или fallback на PostgreSQL через Repository)
-
-## Взаимодействие компонентов на бэке
-
-### Сценарий 1: Добавление нового результата (UI → БД)
-
-**Поток данных при сохранении:**
-
-
-**Детальное описание:**
-
-1. **AreaCheckBean** (контроллер):
-   - Получает данные из формы (x, y, r)
-   - Измеряет время выполнения
-   - Делегирует расчет попадания в `AreaCalculationService`
-   - Создает `ResultDTO` и передает в `ResultsBean`
-
-2. **AreaCalculationService** (бизнес-логика):
-   - Проверяет попадание точки в область по математическим формулам
-   - Возвращает boolean результат
-
-3. **ResultsBean** (контроллер):
-   - Принимает `ResultDTO` от `AreaCheckBean`
-   - Делегирует сохранение в `ResultService`
-   - Обновляет свой кэш результатов после сохранения
-
-4. **ResultService** (координация):
-   - Конвертирует `ResultDTO` → `ResultEntity` через `ResultMapper`
-   - Вызывает `ResultRepository` для сохранения
-
-5. **ResultMapper** (конвертация):
-   - Создает `ResultEntity` из `ResultDTO` без ID (ID генерируется БД)
-   - Устанавливает timestamp автоматически
-
-6. **ResultRepository** (работа с БД):
-   - Управляет `EntityManager`
-   - Выполняет транзакции (begin, commit, rollback)
-   - Сохраняет `ResultEntity` через JPA
-
-### Сценарий 2: Загрузка результатов (БД → UI)
-
-**Поток данных при загрузке:**
-
-
-**Детальное описание:**
-
-1. **ResultsBean** (контроллер):
-   - Хранит кэш `List<ResultDTO>` в памяти (SessionScoped)
-   - При первом обращении загружает данные через `ResultService`
-   - Возвращает DTO для отображения в UI
-
-2. **ResultService** (координация):
-   - Получает `List<ResultEntity>` из `ResultRepository`
-   - Конвертирует каждый Entity в DTO через `ResultMapper.toDTO()`
-   - Возвращает `List<ResultDTO>`
-
-3. **ResultRepository** (работа с БД):
-   - Выполняет JPQL запрос: `SELECT r FROM ResultEntity r ORDER BY r.timestamp DESC`
-   - Возвращает список Entity из БД
-
-4. **ResultMapper** (конвертация):
-   - Создает `ResultDTO` из `ResultEntity`
-   - Копирует все поля включая ID и timestamp
-
-### Преимущества архитектуры
-
-1. **Разделение ответственности:**
-   - Managed Beans - только связь с UI
-   - Service - бизнес-логика
-   - Repository - работа с БД
-   - Mapper - конвертация между слоями
-
-2. **Независимость слоев:**
-   - Контроллеры не зависят от JPA
-   - Изменения в Entity не влияют на контроллеры
-   - Легко тестировать каждый слой отдельно
-
-3. **Переиспользование:**
-   - Service можно использовать из других мест (REST API, другие beans)
-   - Repository можно использовать для разных операций
-
-4. **Масштабируемость:**
-   - Легко добавить кэширование в Service
-   - Легко добавить логирование
-   - Легко добавить транзакции на уровне Service
-
-## Hazelcast Cache Integration
-
-Приложение использует Hazelcast для распределенного кеширования результатов проверки точек.
-
-### Архитектура кеширования
-
-**Паттерн: Write-Through с синхронизацией**
-- **Запись**: одновременно в Hazelcast кеш и PostgreSQL БД
-- **Чтение**: только из Hazelcast кеша
-- **Инициализация**: при старте приложения загрузка всех данных из БД в кеш
-- **Консистентность**: Hazelcast обеспечивает синхронизацию между инстансами через distributed cache
-
-**Роль компонентов:**
-- **Hazelcast**: распределенный кеш для быстрого доступа и синхронизации между инстансами
-- **PostgreSQL**: персистентное хранилище для долгосрочного хранения и восстановления данных
-
-### Компоненты кеширования
-
-- `HazelcastConfig` - конфигурация Hazelcast клиента
-- `CacheService` - сервис для работы с Hazelcast кешем
-- `ResultService` - модифицирован для использования кеша (write-through паттерн)
-
-### Порядок запуска
-
-**Важно:** Приложение развертывается на WildFly, но требует отдельно запущенный Hazelcast сервер.
-
-1. **Сначала запустить Hazelcast сервер** (standalone, отдельный процесс)
-2. **Затем запустить WildFly** с развернутым приложением
-3. Приложение на WildFly подключится к Hazelcast серверу как клиент
-
-### Установка и запуск Hazelcast сервера
-
-**Важно:** 
-- Зависимости Hazelcast клиента уже добавлены в `build.gradle` и будут автоматически скачаны при сборке проекта
-- Приложение развертывается на **WildFly** и подключается к Hazelcast серверу как клиент
-- Hazelcast сервер должен быть запущен **отдельно** (standalone) до запуска WildFly
-
-1. **Получить Hazelcast сервер JAR:**
-   
-   Скачать `hazelcast-5.3.6.jar` с официального сайта:
-   ```bash
-      https://repo1.maven.org/maven2/com/hazelcast/hazelcast/5.3.6/hazelcast-5.3.6.jar
-   ```
-
-2. **Запустить Hazelcast сервер (отдельно от WildFly):**
-   ```bash
-   # Запустить standalone Hazelcast сервер
-   java -jar hazelcast-5.3.6.jar
-   ```
-   
-   **Важно:** Hazelcast сервер должен быть запущен **до** развертывания приложения на WildFly.
-
-3. **Проверить запуск Hazelcast сервера:**
-   - Сервер должен запуститься на порту `5701` по умолчанию
-   - В логах должно быть сообщение: `Members {size:1, ver:1} [...]`
-   - Сервер должен продолжать работать в отдельном окне/процессе
-
-### Конфигурация
-
-Конфигурация Hazelcast клиента находится в:
-- `src/main/resources/hazelcast-client.xml` - XML конфигурация
-- `src/main/java/org/example/config/HazelcastConfig.java` - Java конфигурация
-
-По умолчанию клиент подключается к `localhost:5701`.
-
-### Тестирование нескольких инстансов
-
-Для проверки синхронизации кеша между несколькими инстансами приложения на WildFly:
-
-1. **Запустить Hazelcast сервер (один для всех инстансов):**
-   ```bash
-   java -jar hazelcast-5.3.6.jar
-   ```
-   Оставить сервер запущенным в отдельном окне/процессе.
-
-2. **Собрать WAR файл:**
-   ```bash
-   ./gradlew clean war
-   ```
-
-3. **Запустить первый инстанс WildFly:**
-   ```bash
-   # Скопировать WAR в deployments первого WildFly
-   cp build/libs/labwork2.war C:\wildfly1\standalone\deployments\
-   
-   # Запустить первый WildFly (если еще не запущен)
-   # Приложение будет доступно на http://localhost:8080 (или другой порт)
-   ```
-
-4. **Запустить второй инстанс WildFly:**
-   ```bash
-   # Скопировать тот же WAR в deployments второго WildFly
-   cp build/libs/labwork2.war C:\wildfly2\standalone\deployments\
-   
-   # Запустить второй WildFly на другом порту (например, 8081)
-   # Нужно настроить offset в standalone.xml второго WildFly
-   ```
-
-5. **Проверить синхронизацию кеша:**
-   - Открыть приложение в первом WildFly (например, `http://localhost:8080`)
-   - Добавить несколько точек через форму
-   - Открыть приложение во втором WildFly (например, `http://localhost:8081`)
-   - Проверить, что все точки, добавленные в первом инстансе, видны во втором
-   - Добавить точку во втором инстансе
-   - Проверить, что новая точка видна в первом инстансе
-   - Оба инстанса должны видеть одинаковые данные из общего Hazelcast кеша
-
-### Обработка ошибок
-
-- Если Hazelcast сервер недоступен, приложение продолжит работу с fallback на БД
-- При записи: данные всегда сохраняются в БД (источник истины)
-- При чтении: если кеш недоступен, данные загружаются из БД
-- При инициализации: если кеш недоступен, приложение запустится, но кеш будет пустым
-
-### Логирование
-
-Все операции с кешем логируются в консоль:
-- `CacheService initialized` - кеш инициализирован
-- `Result cached with key: ...` - результат сохранен в кеш
-- `Cache initialized with X results from database` - кеш загружен из БД
-- `Cache cleared` - кеш очищен
+Область состоит из трех частей:
+1. Треугольник в первом квадранте: x ≥ 0, y ≥ 0, x + y ≤ R
+2. Прямоугольник во втором квадранте: x ≤ 0, y ≥ 0, x ≥ -R/2, y ≤ R
+3. Четверть круга в четвертом квадранте: x ≥ 0, y ≤ 0, x² + y² ≤ (R/2)²
