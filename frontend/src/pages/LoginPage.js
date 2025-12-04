@@ -36,16 +36,16 @@ const LoginPage = () => {
   };
 
   const studentInfo = {
-    name: 'Иванов Иван Иванович',
-    group: 'P3215',
-    variant: 'Вариант 12345'
+    name: 'Тарасов Владислав Павлович',
+    group: 'P3219',
+    variant: 'Вариант 8765'
   };
 
   return (
     <div className="login-page">
       <header className="login-header">
         <h1>
-          {studentInfo.name} — группа {studentInfo.group} — {studentInfo.variant}
+          {studentInfo.name}, группа {studentInfo.group}, {studentInfo.variant}
         </h1>
       </header>
       

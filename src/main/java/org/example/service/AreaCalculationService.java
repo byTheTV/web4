@@ -10,24 +10,31 @@ public class AreaCalculationService {
             return false;
         }
         
-        // Use absolute value of R for calculations (since R can be negative in input but represents radius)
+        // Радиус области должен быть положительным
         double absR = Math.abs(r);
-        
-        // Condition: x >= 0, y >= 0, x + y <= R
-        if (x >= 0 && y >= 0) {
-            return (x + y) <= absR;
+        if (absR <= 0) {
+            return false;
         }
-        
-        // Condition: x <= 0, y >= 0, x >= -R/2, y <= R
-        if (x <= 0 && y >= 0) {
-            return x >= -absR / 2 && y <= absR;
+
+        // Левая область: многоугольник с вершинами
+        // A(-R, -R), B(0, -R), C(0, R), D(-R, R/2)
+        //
+        // Условие: x ∈ [-R, 0], y ∈ [-R, y_top(x)],
+        // где верхняя граница y_top(x) = x/2 + R (прямая через точки D(-R, R/2) и C(0, R))
+        if (x <= 0) {
+            if (x >= -absR) {
+                double yTop = x / 2.0 + absR;
+                return y >= -absR && y <= yTop;
+            }
         }
-        
-        // Condition: x >= 0, y <= 0, x^2 + y^2 <= (R/2)^2
+
+        // Правая область: четверть круга радиуса R/2 в 4-й четверти
+        // x >= 0, y <= 0, x^2 + y^2 <= (R/2)^2
         if (x >= 0 && y <= 0) {
-            return (x * x + y * y) <= (absR / 2) * (absR / 2);
+            double radius = absR / 2.0;
+            return x * x + y * y <= radius * radius + 1e-9; // небольшой допуск на погрешность
         }
-        
+
         return false;
     }
 }

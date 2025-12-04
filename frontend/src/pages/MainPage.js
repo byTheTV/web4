@@ -26,6 +26,10 @@ const MainPage = () => {
   const { username } = useSelector(state => state.auth);
   const { results, loading, error } = useSelector(state => state.result);
 
+  // Вариант по заданию:
+  // X: AutoComplete из набора {-2,-1.5,-1,-0.5,0,0.5,1,1.5,2}
+  // Y: текстовое поле, диапазон [-3, 3]
+  // R: AutoComplete из того же набора, но радиус должен быть > 0
   const allowedX = ['-2', '-1.5', '-1', '-0.5', '0', '0.5', '1', '1.5', '2'];
   const allowedR = ['-2', '-1.5', '-1', '-0.5', '0', '0.5', '1', '1.5', '2'];
 
@@ -65,18 +69,57 @@ const MainPage = () => {
       setYError('Y обязателен для ввода');
       return false;
     }
-    
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) {
+
+    const normalized = value.replace(',', '.').trim();
+
+    // Строгая проверка десятичного числа без использования плавающей точки
+    const decimalRegex = /^[+-]?\d+(\.\d+)?$/;
+    if (!decimalRegex.test(normalized)) {
       setYError('Y должен быть числом');
       return false;
     }
-    
-    if (numValue < -3 || numValue > 3) {
+
+    // Проверяем, что |Y| <= 3, работая со строкой, чтобы избежать проблем 3.0000000000000001
+    const withoutSign =
+      normalized[0] === '-' || normalized[0] === '+'
+        ? normalized.slice(1)
+        : normalized;
+
+    let [intPartRaw, fracPartRaw = ''] = withoutSign.split('.');
+
+    // Убираем лидирующие нули в целой части
+    let intPart = intPartRaw.replace(/^0+(?=\d)/, '');
+    if (intPart === '') intPart = '0';
+
+    // Убираем хвостовые нули в дробной части
+    const fracPart = fracPartRaw.replace(/0+$/, '');
+
+    // Теперь сравниваем |Y| с 3
+    // Если целая часть имеет больше одной цифры — число гарантированно больше 9, значит > 3
+    if (intPart.length > 1) {
       setYError('Y должен быть в диапазоне от -3 до 3');
       return false;
     }
-    
+
+    if (intPart < '3') {
+      // |Y| < 3 — корректно
+      setYError('');
+      return true;
+    }
+
+    if (intPart > '3') {
+      // |Y| > 3
+      setYError('Y должен быть в диапазоне от -3 до 3');
+      return false;
+    }
+
+    // intPart === '3' — проверяем дробную часть: допускаем только нули / отсутствие
+    if (fracPart && fracPart.length > 0) {
+      // Есть ненулевые цифры после точки: |Y| > 3 (например, 3.0000000000000001)
+      setYError('Y должен быть в диапазоне от -3 до 3');
+      return false;
+    }
+
     setYError('');
     return true;
   };
@@ -114,15 +157,21 @@ const MainPage = () => {
       alert(`X должно быть одним из: ${allowedX.join(', ')}`);
       return;
     }
-    
+
+    // Радиус задаётся из того же набора, но должен быть положительным
     if (!allowedR.includes(rValue)) {
       alert(`R должно быть одним из: ${allowedR.join(', ')}`);
       return;
     }
-    
-    const xNum = parseFloat(xValue);
-    const yNum = parseFloat(y);
-    const rNum = parseFloat(rValue);
+
+    const rNum = parseFloat(rValue.replace(',', '.'));
+    if (isNaN(rNum) || !isFinite(rNum) || rNum <= 0) {
+      alert('R должен быть положительным числом из указанного набора. Хоть в задании написано, что R может быть отрицательным, но отрицательные радиусы не существуют в нашем случае');
+      return;
+    }
+
+    const xNum = parseFloat(xValue.replace(',', '.'));
+    const yNum = parseFloat(y.replace(',', '.'));
     
     await dispatch(checkPoint({ x: xNum, y: yNum, r: rNum }));
     await dispatch(fetchResults());
@@ -146,7 +195,7 @@ const MainPage = () => {
       }
     }
     setX(closestX);
-    const yStr = canvasY.toString();
+    const yStr = canvasY.toFixed(3).replace(/\.?0+$/,''); // аккуратный вывод
     setY(yStr);
     validateY(yStr);
   };
@@ -158,16 +207,16 @@ const MainPage = () => {
   };
 
   const studentInfo = {
-    name: 'Иванов Иван Иванович',
-    group: 'P3215',
-    variant: 'Вариант 12345'
+    name: 'Тарасов Владислав Павлович',
+    group: 'P3219',
+    variant: 'Вариант 8765'
   };
 
   return (
     <div className="main-page">
       <header className="main-header">
         <h1>
-          {studentInfo.name} — группа {studentInfo.group} — {studentInfo.variant}
+          {studentInfo.name}, группа {studentInfo.group}, {studentInfo.variant}
         </h1>
         <div className="header-actions">
           <span className="username">Пользователь: {username}</span>
@@ -202,14 +251,9 @@ const MainPage = () => {
                   suggestions={xSuggestions}
                   completeMethod={searchX}
                   onChange={(e) => {
+                    // Разрешаем промежуточные значения (например, только "-")
                     const normalized = normalizeValue(e.value);
-                    // Проверяем, что значение в списке допустимых
-                    if (normalized && !allowedX.includes(normalized)) {
-                      // Если значение не в списке, сбрасываем
-                      setX(null);
-                    } else {
-                      setX(normalized);
-                    }
+                    setX(normalized);
                   }}
                   placeholder="Выберите значение"
                   required
@@ -241,14 +285,9 @@ const MainPage = () => {
                   suggestions={rSuggestions}
                   completeMethod={searchR}
                   onChange={(e) => {
+                    // Разрешаем промежуточные значения, валидация — при сабмите
                     const normalized = normalizeValue(e.value);
-                    // Проверяем, что значение в списке допустимых
-                    if (normalized && !allowedR.includes(normalized)) {
-                      // Если значение не в списке, сбрасываем
-                      setR(null);
-                    } else {
-                      setR(normalized);
-                    }
+                    setR(normalized);
                   }}
                   placeholder="Выберите значение"
                   required
@@ -261,7 +300,15 @@ const MainPage = () => {
                 type="submit"
                 label="Проверить"
                 loading={loading}
-                disabled={loading || x === null || !y || r === null || !!yError}
+                disabled={
+                  loading ||
+                  !x ||
+                  !y ||
+                  !r ||
+                  !!yError ||
+                  !allowedX.includes(normalizeValue(x) || '') ||
+                  !allowedR.includes(normalizeValue(r) || '')
+                }
                 className="submit-button"
               />
             </form>

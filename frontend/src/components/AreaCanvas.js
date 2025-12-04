@@ -24,7 +24,9 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
     ctx.clearRect(0, 0, size, size);
     
     const currentR = Math.abs(r || 1);
-    const domainMax = Math.max(5, currentR + 1);
+    // Диапазон координат по условию: X, Y ∈ [-3, 3]
+    const domainMax = 3;
+    const epsilon = 0.05; // небольшой отступ, чтобы точки на границе были видны
     const unit = size / (domainMax * 2);
     const cx = size / 2;
     const cy = size / 2;
@@ -66,28 +68,37 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
     ctx.lineTo(cx + 4, 10);
     ctx.fill();
     
-    // Draw region
+    // Область по новому варианту (см. assets/areas.png)
     ctx.fillStyle = 'rgba(30, 144, 255, 0.4)';
     ctx.strokeStyle = 'rgba(30, 144, 255, 0.8)';
     ctx.lineWidth = 2;
-    
-    // First quadrant: triangle
+
+    // Левая многоугольная область с вершинами:
+    // A(-R, -R), B(0, -R), C(0, R), D(-R, R/2)
+    const ax1 = cx - currentR * unit;
+    const ay1 = cy + currentR * unit;
+    const bx1 = cx;
+    const by1 = cy + currentR * unit;
+    const cx1 = cx;
+    const cy1 = cy - currentR * unit;
+    const dx1 = cx - currentR * unit;
+    const dy1 = cy - (currentR / 2) * unit;
+
     ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + currentR * unit, cy);
-    ctx.lineTo(cx, cy - currentR * unit);
+    ctx.moveTo(ax1, ay1);
+    ctx.lineTo(bx1, by1);
+    ctx.lineTo(cx1, cy1);
+    ctx.lineTo(dx1, dy1);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    
-    // Second quadrant: rectangle
-    ctx.fillRect(cx - (currentR / 2) * unit, cy - currentR * unit, (currentR / 2) * unit, currentR * unit);
-    ctx.strokeRect(cx - (currentR / 2) * unit, cy - currentR * unit, (currentR / 2) * unit, currentR * unit);
-    
-    // Fourth quadrant: quarter circle
+
+    // Правая четверть круга радиуса R/2 в 4-й четверти: x^2 + y^2 <= (R/2)^2, x>=0, y<=0
+    const radius = (currentR / 2) * unit;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, (currentR / 2) * unit, 0, Math.PI / 2, false);
+    ctx.arc(cx, cy, radius, 0, Math.PI / 2, false); // от (R/2,0) до (0,R/2) в canvas, но ось Y инвертирована
+    ctx.lineTo(cx, cy);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -132,8 +143,11 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
       results.forEach(result => {
         // Compare absolute values of R for matching
         if (Math.abs(Math.abs(result.r) - Math.abs(currentR)) < 0.01) {
-          const px = cx + result.x * unit;
-          const py = cy - result.y * unit;
+          // Немного "втягиваем" точки с границы внутрь, чтобы они не обрезались рамкой
+          const safeX = Math.max(-domainMax + epsilon, Math.min(domainMax - epsilon, result.x));
+          const safeY = Math.max(-domainMax + epsilon, Math.min(domainMax - epsilon, result.y));
+          const px = cx + safeX * unit;
+          const py = cy - safeY * unit;
           ctx.beginPath();
           ctx.arc(px, py, 4, 0, Math.PI * 2);
           ctx.fillStyle = result.hit ? '#2e7d32' : '#b00020';
@@ -145,8 +159,10 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
     // Draw preview point
     if (previewPointRef.current) {
       const { x, y } = previewPointRef.current;
-      const px = cx + x * unit;
-      const py = cy - y * unit;
+      const safeX = Math.max(-domainMax + epsilon, Math.min(domainMax - epsilon, x));
+      const safeY = Math.max(-domainMax + epsilon, Math.min(domainMax - epsilon, y));
+      const px = cx + safeX * unit;
+      const py = cy - safeY * unit;
       ctx.beginPath();
       ctx.arc(px, py, 6, 0, Math.PI * 2);
       ctx.fillStyle = '#2563eb';
@@ -167,7 +183,7 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
     
     const size = canvas.clientWidth;
     const currentR = Math.abs(r || 1);
-    const domainMax = Math.max(5, currentR + 1);
+    const domainMax = 3;
     const unit = size / (domainMax * 2);
     const cx = size / 2;
     const cy = size / 2;
@@ -176,10 +192,10 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
     const canvasX = (x - cx) / unit;
     const canvasY = -(y - cy) / unit;
     
-    // Clamp Y
+    // Clamp Y to new range [-3, 3]
     const clampedY = Math.max(-3, Math.min(3, canvasY));
     
-    // Find closest X value
+    // Набор допустимых X согласно заданию
     const allowedX = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2];
     let closestX = allowedX[0];
     let minDist = Math.abs(canvasX - closestX);
@@ -205,7 +221,7 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
     
     const size = canvas.clientWidth;
     const currentR = Math.abs(r || 1);
-    const domainMax = Math.max(5, currentR + 1);
+    const domainMax = 3;
     const unit = size / (domainMax * 2);
     const cx = size / 2;
     const cy = size / 2;
@@ -214,10 +230,10 @@ const AreaCanvas = ({ r, results, onCanvasClick }) => {
     const canvasX = (x - cx) / unit;
     const canvasY = -(y - cy) / unit;
     
-    // Clamp Y
+    // Clamp Y to new range [-3, 3]
     const clampedY = Math.max(-3, Math.min(3, canvasY));
     
-    // Find closest X value
+    // Набор допустимых X согласно заданию
     const allowedX = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2];
     let closestX = allowedX[0];
     let minDist = Math.abs(canvasX - closestX);

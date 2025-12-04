@@ -47,6 +47,9 @@
 .form-card,
 .canvas-card {
   min-height: 400px;
+  background: #ffffff;
+  padding: 24px 24px 28px;
+  border-radius: 12px;
 }
 
 .check-form {
@@ -83,6 +86,9 @@
 
 .results-card {
   width: 100%;
+  background: #ffffff;
+  padding: 24px 24px 28px;
+  border-radius: 12px;
 }
 
 .results-table {
