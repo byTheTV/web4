@@ -22,7 +22,6 @@ public class UserController {
     
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        // JWT is stateless, so logout is handled on client side by removing token
         return ResponseEntity.ok("Logged out successfully");
     }
 }

@@ -14,7 +14,7 @@
   cursor: crosshair;
 }
 
-/* Desktop: >= 1266px */
+
 @media (min-width: 1266px) {
   .area-canvas {
     width: 500px;
@@ -22,7 +22,7 @@
   }
 }
 
-/* Tablet: 714px - 1265px */
+
 @media (min-width: 714px) and (max-width: 1265px) {
   .area-canvas {
     width: 400px;
@@ -30,7 +30,7 @@
   }
 }
 
-/* Mobile: < 714px */
+
 @media (max-width: 713px) {
   .canvas-container {
     padding: 10px;

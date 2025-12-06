@@ -30,7 +30,6 @@ public @interface PointValidator {
             if (value == null) {
                 return false;
             }
-            // Check if value is in allowed list (with small tolerance for floating point comparison)
             return ALLOWED_VALUES.stream()
                     .anyMatch(allowed -> Math.abs(value - allowed) < 0.001);
         }

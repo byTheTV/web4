@@ -14,7 +14,6 @@ body {
   color: #0f172a;
 }
 
-/* Центруем приложение и добавляем поля по краям */
 #root {
   min-height: 100vh;
   display: flex;
@@ -23,7 +22,6 @@ body {
   padding: 16px;
 }
 
-/* Ограничиваем ширину содержимого приложения */
 .App {
   width: 100%;
   max-width: 1200px;

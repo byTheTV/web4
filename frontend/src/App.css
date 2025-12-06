@@ -4,21 +4,19 @@
   flex-direction: column;
 }
 
-/* Desktop: >= 1266px */
 @media (min-width: 1266px) {
   .App {
     font-size: 16px;
   }
 }
 
-/* Tablet: 714px - 1265px */
 @media (min-width: 714px) and (max-width: 1265px) {
   .App {
     font-size: 15px;
   }
 }
 
-/* Mobile: < 714px */
+
 @media (max-width: 713px) {
   .App {
     font-size: 14px;

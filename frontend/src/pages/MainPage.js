@@ -26,10 +26,7 @@ const MainPage = () => {
   const { username } = useSelector(state => state.auth);
   const { results, loading, error } = useSelector(state => state.result);
 
-  // Вариант по заданию:
-  // X: AutoComplete из набора {-2,-1.5,-1,-0.5,0,0.5,1,1.5,2}
-  // Y: текстовое поле, диапазон [-3, 3]
-  // R: AutoComplete из того же набора, но радиус должен быть > 0
+
   const allowedX = ['-2', '-1.5', '-1', '-0.5', '0', '0.5', '1', '1.5', '2'];
   const allowedR = ['-2', '-1.5', '-1', '-0.5', '0', '0.5', '1', '1.5', '2'];
 
@@ -58,7 +55,6 @@ const MainPage = () => {
     if (typeof value === 'string') return value;
     if (typeof value === 'number') return String(value);
     if (typeof value === 'object' && value !== null) {
-      // Если это объект, попробуем извлечь значение
       return value.value || value.label || String(value);
     }
     return String(value);
@@ -72,14 +68,12 @@ const MainPage = () => {
 
     const normalized = value.replace(',', '.').trim();
 
-    // Строгая проверка десятичного числа без использования плавающей точки
     const decimalRegex = /^[+-]?\d+(\.\d+)?$/;
     if (!decimalRegex.test(normalized)) {
       setYError('Y должен быть числом');
       return false;
     }
 
-    // Проверяем, что |Y| <= 3, работая со строкой, чтобы избежать проблем 3.0000000000000001
     const withoutSign =
       normalized[0] === '-' || normalized[0] === '+'
         ? normalized.slice(1)
@@ -87,35 +81,27 @@ const MainPage = () => {
 
     let [intPartRaw, fracPartRaw = ''] = withoutSign.split('.');
 
-    // Убираем лидирующие нули в целой части
     let intPart = intPartRaw.replace(/^0+(?=\d)/, '');
     if (intPart === '') intPart = '0';
 
-    // Убираем хвостовые нули в дробной части
     const fracPart = fracPartRaw.replace(/0+$/, '');
 
-    // Теперь сравниваем |Y| с 3
-    // Если целая часть имеет больше одной цифры — число гарантированно больше 9, значит > 3
     if (intPart.length > 1) {
       setYError('Y должен быть в диапазоне от -3 до 3');
       return false;
     }
 
     if (intPart < '3') {
-      // |Y| < 3 — корректно
       setYError('');
       return true;
     }
 
     if (intPart > '3') {
-      // |Y| > 3
       setYError('Y должен быть в диапазоне от -3 до 3');
       return false;
     }
 
-    // intPart === '3' — проверяем дробную часть: допускаем только нули / отсутствие
     if (fracPart && fracPart.length > 0) {
-      // Есть ненулевые цифры после точки: |Y| > 3 (например, 3.0000000000000001)
       setYError('Y должен быть в диапазоне от -3 до 3');
       return false;
     }
@@ -152,13 +138,11 @@ const MainPage = () => {
       return;
     }
     
-    // Проверяем, что значения в списке допустимых
     if (!allowedX.includes(xValue)) {
       alert(`X должно быть одним из: ${allowedX.join(', ')}`);
       return;
     }
 
-    // Радиус задаётся из того же набора, но должен быть положительным
     if (!allowedR.includes(rValue)) {
       alert(`R должно быть одним из: ${allowedR.join(', ')}`);
       return;
@@ -195,7 +179,7 @@ const MainPage = () => {
       }
     }
     setX(closestX);
-    const yStr = canvasY.toFixed(3).replace(/\.?0+$/,''); // аккуратный вывод
+    const yStr = canvasY.toFixed(3).replace(/\.?0+$/,''); 
     setY(yStr);
     validateY(yStr);
   };
