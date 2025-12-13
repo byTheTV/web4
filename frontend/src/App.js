@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import MainPage from './pages/MainPage';
+import LandingPage from './pages/LandingPage';
 import { initializeKeycloak, refreshKeycloakToken, logoutFromKeycloak } from './store/slices/authSlice';
 import keycloak from './keycloak';
 import './App.css';
@@ -24,24 +25,15 @@ function App() {
     );
   }
 
-  if (error || !isAuthenticated) {
-    return (
-      <div className="App">
-        <p>{error || 'Требуется вход через Keycloak'}</p>
-        <button onClick={() => keycloak.login({ redirectUri: `${window.location.origin}/` })}>Войти</button>
-        <button onClick={() => keycloak.register({ redirectUri: `${window.location.origin}/` })}>
-          Регистрация
-        </button>
-        <button onClick={() => dispatch(logoutFromKeycloak())}>Выйти</button>
-      </div>
-    );
-  }
-
   return (
     <div className="App">
       <Routes>
-        <Route path="/main" element={<MainPage />} />
-        <Route path="*" element={<Navigate to="/main" />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/main" /> : <LandingPage />} />
+        <Route
+          path="/main"
+          element={isAuthenticated ? <MainPage /> : <Navigate to="/" />}
+        />
+        <Route path="*" element={<Navigate to={isAuthenticated ? '/main' : '/'} />} />
       </Routes>
     </div>
   );

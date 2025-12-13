@@ -13,23 +13,26 @@ export const initializeKeycloak = createAsyncThunk(
   'auth/initializeKeycloak',
   async (_, { rejectWithValue }) => {
     try {
+      const hasAuthParams =
+        window.location.href.includes('code=') ||
+        window.location.href.includes('session_state=');
+
       if (!keycloakInitialized) {
         const authenticated = await initKeycloak({
-          onLoad: 'login-required',
+          onLoad: hasAuthParams ? 'login-required' : 'check-sso',
           checkLoginIframe: false,
           pkceMethod: 'S256',
+          silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
         });
 
         keycloakInitialized = true;
 
         if (!authenticated) {
-          await keycloak.login({ redirectUri: `${window.location.origin}/` });
           return { token: null, username: null, authenticated: false };
         }
       }
 
       if (!keycloak.authenticated) {
-        await keycloak.login({ redirectUri: `${window.location.origin}/` });
         return { token: null, username: null, authenticated: false };
       }
 
