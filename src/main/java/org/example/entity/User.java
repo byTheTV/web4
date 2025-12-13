@@ -15,11 +15,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
     @SequenceGenerator(name = "user_seq", sequenceName = "user_seq", allocationSize = 1)
     private Long id;
+
+    @Column(name = "keycloak_id", unique = true, nullable = true)
+    private String keycloakId;
     
     @Column(unique = true, nullable = false)
     private String username;
     
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String passwordHash;
 }
 

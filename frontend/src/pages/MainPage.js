@@ -8,7 +8,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
 import { Message } from 'primereact/message';
-import { logout } from '../store/slices/authSlice';
+import { logoutFromKeycloak } from '../store/slices/authSlice';
 import { checkPoint, fetchResults } from '../store/slices/resultSlice';
 import AreaCanvas from '../components/AreaCanvas';
 import './MainPage.css';
@@ -23,7 +23,7 @@ const MainPage = () => {
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { username } = useSelector(state => state.auth);
+  const { username, isAuthenticated } = useSelector(state => state.auth);
   const { results, loading, error } = useSelector(state => state.result);
 
 
@@ -31,8 +31,10 @@ const MainPage = () => {
   const allowedR = ['-2', '-1.5', '-1', '-0.5', '0', '0.5', '1', '1.5', '2'];
 
   useEffect(() => {
-    dispatch(fetchResults());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchResults());
+    }
+  }, [dispatch, isAuthenticated]);
 
   const searchX = (event) => {
     const query = event.query.toLowerCase();
@@ -162,8 +164,8 @@ const MainPage = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
+    dispatch(logoutFromKeycloak());
+    navigate('/main');
   };
 
   const handleCanvasClick = (canvasX, canvasY) => {

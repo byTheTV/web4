@@ -1,8 +1,8 @@
 package org.example.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -11,13 +11,17 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+    public ResponseEntity<?> getCurrentUser(JwtAuthenticationToken authentication) {
         if (authentication == null) {
             return ResponseEntity.status(401).body("Not authenticated");
         }
-        
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return ResponseEntity.ok(userDetails.getUsername());
+
+        Jwt jwt = authentication.getToken();
+        String username = jwt.getClaimAsString("preferred_username");
+        if (username == null || username.isBlank()) {
+            username = authentication.getName();
+        }
+        return ResponseEntity.ok(username);
     }
     
     @PostMapping("/logout")

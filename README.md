@@ -4,6 +4,20 @@
 
 `http://localhost:8080`
 
+### Запуск Keycloak через Docker
+
+```bash
+docker compose -f docker-compose.keycloak.yml up -d
+```
+
+- Админ-панель: `http://localhost:8081`
+- Админ-учётка по умолчанию: `admin` / `admin`
+- При старте автоматически импортируется realm `area-check` с публичным клиентом `area-check-frontend` и пользователем `demo/demo` (файл `keycloak/realm-export/area-check-realm.json`).
+- Если поднимаете не на localhost, поменяйте в файле `keycloak/realm-export/area-check-realm.json` значения `redirectUris`/`webOrigins` под ваш хост и перезапустите `docker compose ... up -d`.
+- При необходимости обновите переменные:
+  - backend: `keycloak.auth-server-url` и `keycloak.realm` в `src/main/resources/application.properties`
+  - frontend: `REACT_APP_KEYCLOAK_URL`, `REACT_APP_KEYCLOAK_REALM`, `REACT_APP_KEYCLOAK_CLIENT_ID`
+
 
 ```bash
 cd frontend
@@ -70,19 +84,14 @@ SELECT * FROM users;
    spring.datasource.password=your_password
    ```
 
-
-## API Endpoints
-
-### Аутентификация
-- `POST /api/auth/login` 
-- `POST /api/auth/register`
+## API Endpoints (после перехода на Keycloak)
 
 ### Проверка точки
-- `POST /api/area/check` 
-- `GET /api/area/results` 
+- `POST /api/area/check`
+- `GET /api/area/results`
 
 ### Валидация
-- `GET /api/validation/allowed-x` 
-- `GET /api/validation/allowed-r` 
+- `GET /api/validation/allowed-x`
+- `GET /api/validation/allowed-r`
 - `GET /api/validation/y-range`
 

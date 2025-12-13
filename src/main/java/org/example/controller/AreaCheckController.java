@@ -4,12 +4,11 @@ import jakarta.validation.Valid;
 import org.example.dto.PointCheckRequest;
 import org.example.dto.ResultResponse;
 import org.example.entity.User;
-import org.example.repository.UserRepository;
 import org.example.service.ResultService;
+import org.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,16 +22,14 @@ public class AreaCheckController {
     private ResultService resultService;
     
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
     
     @PostMapping("/check")
     public ResponseEntity<ResultResponse> checkPoint(
             @Valid @RequestBody PointCheckRequest request,
-            Authentication authentication) {
-        
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            JwtAuthenticationToken authentication) {
+
+        User user = userService.resolveUser(authentication);
         
         ResultResponse result = resultService.checkPoint(
                 request.getX(), request.getY(), request.getR(), user);
@@ -41,10 +38,8 @@ public class AreaCheckController {
     }
     
     @GetMapping("/results")
-    public ResponseEntity<List<ResultResponse>> getResults(Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<List<ResultResponse>> getResults(JwtAuthenticationToken authentication) {
+        User user = userService.resolveUser(authentication);
         
         List<ResultResponse> results = resultService.getResultsByUser(user);
         return ResponseEntity.ok(results);
