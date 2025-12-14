@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from 'primereact/button';
+import { Card } from 'primereact/card';
 import keycloak from '../keycloak';
 import './LoginPage.css';
 
@@ -19,14 +20,17 @@ const LandingPage = () => {
       </header>
 
       <main className="login-main">
-        <div className="login-card">
+        <Card className="login-card">
           <h2>Добро пожаловать</h2>
-          <p>Для продолжения выполните вход через Keycloak.</p>
+          <p style={{ marginBottom: '20px', textAlign: 'center' }}>
+            Для продолжения выполните вход через Keycloak.
+          </p>
           <Button
             label="Войти через Keycloak"
             onClick={() => keycloak.login({ redirectUri: `${window.location.origin}/` })}
+            className="submit-button"
           />
-        </div>
+        </Card>
       </main>
     </div>
   );
