@@ -20,15 +20,31 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private Long expiration;
     
+    @Value("${jwt.refresh-expiration}")
+    private Long refreshExpiration;
+    
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
     
     public String generateToken(String username) {
+        return generateAccessToken(username);
+    }
+    
+    public String generateAccessToken(String username) {
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+    
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(getSigningKey())
                 .compact();
     }
