@@ -12,13 +12,18 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/area")
 @CrossOrigin(origins = "http://localhost:3000")
 public class AreaCheckController {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(AreaCheckController.class);
+
     @Autowired
     private ResultService resultService;
     
@@ -34,6 +39,9 @@ public class AreaCheckController {
         if (username == null || username.isBlank()) {
             username = authentication.getName();
         }
+
+        logger.info("User {} (keycloakId: {}) checking point: x={}, y={}, r={}",
+                   username, keycloakId, request.getX(), request.getY(), request.getR());
         
         // Проверка maxRadius из токена
         Double maxRadius = null;

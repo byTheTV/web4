@@ -9,29 +9,39 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class ResultService {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(ResultService.class);
+
     @Autowired
     private ResultRepository resultRepository;
-    
+
     @Autowired
     private CheckLogRepository checkLogRepository;
-    
+
     @Autowired
     private AreaCalculationService areaCalculationService;
     
     @Transactional
     public ResultResponse checkPoint(Double x, Double y, Double r, String keycloakId, String username) {
+        logger.info("Processing point check for user {} (keycloakId: {}): x={}, y={}, r={}",
+                   username, keycloakId, x, y, r);
+
         long startTime = System.nanoTime();
         boolean hit = areaCalculationService.checkPoint(x, y, r);
         long endTime = System.nanoTime();
         long executionTime = endTime - startTime;
         String executionTimeStr = String.format("%.3f мс", executionTime / 1_000_000.0);
-        
+
+        logger.debug("Point check result: hit={}, executionTime={}", hit, executionTimeStr);
+
         Result result = new Result();
         result.setX(x);
         result.setY(y);
@@ -39,10 +49,11 @@ public class ResultService {
         result.setHit(hit);
         result.setExecutionTime(executionTimeStr);
         result.setKeycloakId(keycloakId);
-        
+
         result = resultRepository.save(result);
-        
-        // Логирование информации о пользователе
+        logger.debug("Saved result with id: {}", result.getId());
+
+        // Логирование информации о пользователе в админ-таблицу
         CheckLog log = new CheckLog();
         log.setKeycloakId(keycloakId);
         log.setUsername(username);
@@ -50,8 +61,11 @@ public class ResultService {
         log.setY(y);
         log.setR(r);
         log.setHit(hit);
-        checkLogRepository.save(log);
-        
+        CheckLog savedLog = checkLogRepository.save(log);
+
+        logger.info("Admin log created for user {} (keycloakId: {}): checkId={}, result={}",
+                   username, keycloakId, savedLog.getId(), hit ? "HIT" : "MISS");
+
         return convertToResponse(result);
     }
     

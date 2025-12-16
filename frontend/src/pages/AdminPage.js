@@ -22,21 +22,11 @@ const AdminPage = () => {
   const [dateString, setDateString] = useState('');
 
   useEffect(() => {
-    // Проверка роли ADMIN
-    if (!isAuthenticated) {
-      navigate('/');
-      return;
-    }
-
-    const roles = keycloak.tokenParsed?.realm_access?.roles || [];
-    if (!roles.includes('ADMIN')) {
-      navigate('/');
-      return;
-    }
-
     // Загрузка статистики за сегодня
-    loadStats();
-  }, [dispatch, isAuthenticated, navigate]);
+    if (isAuthenticated) {
+      loadStats();
+    }
+  }, [dispatch, isAuthenticated]);
 
   const loadStats = () => {
     const date = dateString || selectedDate.toISOString().split('T')[0];

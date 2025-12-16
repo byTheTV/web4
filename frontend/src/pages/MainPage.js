@@ -11,6 +11,7 @@ import { Message } from 'primereact/message';
 import { logoutFromKeycloak } from '../store/slices/authSlice';
 import { checkPoint, fetchResults } from '../store/slices/resultSlice';
 import AreaCanvas from '../components/AreaCanvas';
+import keycloak from '../keycloak';
 import './MainPage.css';
 
 const MainPage = () => {
@@ -20,6 +21,7 @@ const MainPage = () => {
   const [xSuggestions, setXSuggestions] = useState([]);
   const [rSuggestions, setRSuggestions] = useState([]);
   const [yError, setYError] = useState('');
+  const [maxRadius, setMaxRadius] = useState(null);
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,6 +35,20 @@ const MainPage = () => {
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchResults());
+
+      // Получаем maxRadius из токена
+      const maxRadiusClaim = keycloak.tokenParsed?.maxRadius;
+      if (maxRadiusClaim) {
+        if (typeof maxRadiusClaim === 'number') {
+          setMaxRadius(maxRadiusClaim);
+        } else if (typeof maxRadiusClaim === 'string') {
+          try {
+            setMaxRadius(parseFloat(maxRadiusClaim));
+          } catch (e) {
+            console.warn('Invalid maxRadius in token:', maxRadiusClaim);
+          }
+        }
+      }
     }
   }, [dispatch, isAuthenticated]);
 
@@ -153,6 +169,12 @@ const MainPage = () => {
     const rNum = parseFloat(rValue.replace(',', '.'));
     if (isNaN(rNum) || !isFinite(rNum) || rNum <= 0) {
       alert('R должен быть положительным числом из указанного набора. Хоть в задании написано, что R может быть отрицательным, но отрицательные радиусы не существуют в нашем случае');
+      return;
+    }
+
+    // Проверка maxRadius
+    if (maxRadius !== null && rNum > maxRadius) {
+      alert(`R (${rNum}) превышает максимально допустимое значение (${maxRadius})`);
       return;
     }
 
