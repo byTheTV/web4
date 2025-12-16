@@ -165,7 +165,7 @@ const MainPage = () => {
 
   const handleLogout = () => {
     dispatch(logoutFromKeycloak());
-    navigate('/main');
+    navigate('/');
   };
 
   const handleCanvasClick = (canvasX, canvasY) => {

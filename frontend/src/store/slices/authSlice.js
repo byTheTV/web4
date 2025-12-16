@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import keycloak, { initKeycloak } from '../../keycloak';
+import keycloak, { initKeycloak, resetKeycloak } from '../../keycloak';
 
 let keycloakInitialized = false;
 
@@ -17,6 +17,12 @@ export const initializeKeycloak = createAsyncThunk(
         window.location.href.includes('code=') ||
         window.location.href.includes('session_state=');
 
+      // Если есть параметры авторизации, сбрасываем инициализацию для переинициализации
+      if (hasAuthParams && keycloakInitialized) {
+        resetKeycloak();
+        keycloakInitialized = false;
+      }
+
       if (!keycloakInitialized) {
         const authenticated = await initKeycloak({
           onLoad: hasAuthParams ? 'login-required' : 'check-sso',
@@ -32,8 +38,27 @@ export const initializeKeycloak = createAsyncThunk(
         }
       }
 
+      // Проверяем состояние после инициализации
       if (!keycloak.authenticated) {
         return { token: null, username: null, authenticated: false };
+      }
+
+      // Если есть параметры авторизации (после редиректа), ждем немного и обновляем токен
+      // чтобы убедиться, что все данные (включая роли) загружены
+      if (hasAuthParams) {
+        // Небольшая задержка для обработки редиректа
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Обновляем токен, чтобы получить актуальные данные (роли и т.д.)
+        try {
+          await keycloak.updateToken(30);
+        } catch (error) {
+          console.warn('Failed to update token after redirect:', error);
+          // Продолжаем работу даже если обновление токена не удалось
+        }
+        
+        // Очищаем URL от параметров авторизации после успешной инициализации
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       return {

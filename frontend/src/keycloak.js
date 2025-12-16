@@ -20,8 +20,12 @@ export const initKeycloak = (options) => {
 
 export const resetKeycloak = () => {
   initPromise = null;
-  if (keycloak.clearToken) {
+  // Очищаем токены и состояние Keycloak
+  if (keycloak.token) {
     keycloak.clearToken();
+  }
+  if (keycloak.refreshToken) {
+    keycloak.clearRefreshToken();
   }
 };
 

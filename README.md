@@ -11,12 +11,20 @@ docker compose -f docker-compose.keycloak.yml up -d
 ```
 
 - Админ-панель: `http://localhost:8081`
-- Админ-учётка по умолчанию: `admin` / `admin`
-- При старте автоматически импортируется realm `area-check` с публичным клиентом `area-check-frontend` и пользователем `demo/demo` (файл `keycloak/realm-export/area-check-realm.json`).
+- Админ-учётка Keycloak: `admin` / `admin`
+- При старте автоматически импортируется realm `area-check` с:
+  - Ролями: `USER` и `ADMIN`
+  - Публичным клиентом `area-check-frontend` с mapper для атрибута `maxRadius`
+  - Автоматическим назначением роли `USER` новым зарегистрированным пользователям
+  - Тестовыми пользователями:
+    - `demo` / `demo` (роль: USER, maxRadius: 2.0)
+    - `admin` / `admin` (роли: ADMIN, USER, maxRadius: 5.0)
+    - `user1` / `user1` (роль: USER, maxRadius: 1.5)
 - Если поднимаете не на localhost, поменяйте в файле `keycloak/realm-export/area-check-realm.json` значения `redirectUris`/`webOrigins` под ваш хост и перезапустите `docker compose ... up -d`.
 - При необходимости обновите переменные:
   - backend: `keycloak.auth-server-url` и `keycloak.realm` в `src/main/resources/application.properties`
   - frontend: `REACT_APP_KEYCLOAK_URL`, `REACT_APP_KEYCLOAK_REALM`, `REACT_APP_KEYCLOAK_CLIENT_ID`
+- Подробная информация о настройке Keycloak: см. `KEYCLOAK_SETUP.md`
 
 
 ```bash
@@ -84,14 +92,26 @@ SELECT * FROM users;
    spring.datasource.password=your_password
    ```
 
-## API Endpoints (после перехода на Keycloak)
+## API Endpoints
 
-### Проверка точки
-- `POST /api/area/check`
-- `GET /api/area/results`
+### Проверка точки (требуется роль USER)
+- `POST /api/area/check` - проверка попадания точки в область
+  - Проверяет атрибут `maxRadius` из токена
+  - Если R превышает maxRadius, возвращает 400
+  - Логирует информацию о пользователе в таблицу `check_logs`
+- `GET /api/area/results` - получение результатов проверок текущего пользователя
+
+### Админ-панель (требуется роль ADMIN)
+- `GET /api/admin/stats?date=YYYY-MM-DD` - статистика проверок по пользователям за день
+  - Параметр `date` опционален, по умолчанию текущая дата
 
 ### Валидация
 - `GET /api/validation/allowed-x`
 - `GET /api/validation/allowed-r`
 - `GET /api/validation/y-range`
+
+## Роли и доступ
+
+- **USER**: доступ к `/app` (панель пользователя для проверки точек)
+- **ADMIN**: доступ к `/admin` (админ-панель со статистикой) + доступ к `/app`
 

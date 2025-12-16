@@ -5,6 +5,12 @@ import keycloak from '../keycloak';
 import './LoginPage.css';
 
 const LandingPage = () => {
+  const handleLogin = () => {
+    keycloak.login({
+      redirectUri: `${window.location.origin}/`
+    });
+  };
+
   const studentInfo = {
     name: 'Тарасов Владислав Павлович',
     group: 'P3219',
@@ -27,7 +33,7 @@ const LandingPage = () => {
           </p>
           <Button
             label="Войти через Keycloak"
-            onClick={() => keycloak.login({ redirectUri: `${window.location.origin}/` })}
+            onClick={handleLogin}
             className="submit-button"
           />
         </Card>

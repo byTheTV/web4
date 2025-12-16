@@ -4,9 +4,27 @@
   "sslRequired": "none",
   "registrationAllowed": true,
   "resetPasswordAllowed": true,
+  "browserFlow": "browser",
+  "defaultRoles": [
+    "offline_access",
+    "uma_protection",
+    "USER"
+  ],
   "editUsernameAllowed": false,
   "loginWithEmailAllowed": true,
   "internationalizationEnabled": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "USER",
+        "description": "Regular user role for accessing the application"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Administrator role for accessing admin panel"
+      }
+    ]
+  },
   "clients": [
     {
       "clientId": "area-check-frontend",
@@ -24,7 +42,22 @@
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "maxRadius-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "maxRadius",
+            "claim.name": "maxRadius",
+            "jsonType.label": "double",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -40,9 +73,48 @@
         }
       ],
       "realmRoles": [
-        "default-roles-area-check"
-      ]
+        "USER"
+      ],
+      "attributes": {
+        "maxRadius": ["2.0"]
+      }
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN",
+        "USER"
+      ],
+      "attributes": {
+        "maxRadius": ["5.0"]
+      }
+    },
+    {
+      "username": "user1",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user1",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "USER"
+      ],
+      "attributes": {
+        "maxRadius": ["1.5"]
+      }
     }
   ]
 }
-

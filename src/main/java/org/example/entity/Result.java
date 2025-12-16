@@ -36,9 +36,8 @@ public class Result {
     @Column
     private String executionTime;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "keycloak_id", nullable = false)
+    private String keycloakId;
     
     @PrePersist
     protected void onCreate() {

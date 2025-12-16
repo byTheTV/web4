@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface ResultRepository extends JpaRepository<Result, Long> {
-    List<Result> findByUserIdOrderByTimestampDesc(Long userId);
-    void deleteByUserId(Long userId);
+    List<Result> findByKeycloakIdOrderByTimestampDesc(String keycloakId);
+    void deleteByKeycloakId(String keycloakId);
 }
