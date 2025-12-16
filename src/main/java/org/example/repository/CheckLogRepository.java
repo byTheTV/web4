@@ -12,10 +12,10 @@ import java.util.List;
 @Repository
 public interface CheckLogRepository extends JpaRepository<CheckLog, Long> {
     
-    @Query(value = "SELECT cl.keycloak_id, cl.username, COUNT(cl.id) as check_count " +
-           "FROM check_logs cl " +
-           "WHERE TRUNC(cl.timestamp) = TRUNC(:date) " +
-           "GROUP BY cl.keycloak_id, cl.username " +
+    @Query(value = "SELECT cl.\"KEYCLOAK_ID\", cl.\"USERNAME\", COUNT(cl.id) as check_count " +
+           "FROM \"CHECK_LOGS\" cl " +
+           "WHERE TRUNC(cl.\"TIMESTAMP\") = TRUNC(:date) " +
+           "GROUP BY cl.\"KEYCLOAK_ID\", cl.\"USERNAME\" " +
            "ORDER BY check_count DESC", nativeQuery = true)
     List<Object[]> findDailyStatsByDate(@Param("date") java.sql.Timestamp date);
 }

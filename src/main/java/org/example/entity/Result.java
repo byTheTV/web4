@@ -8,35 +8,35 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "results")
+@Table(name = "\"RESULTS\"")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Result {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "result_seq")
-    @SequenceGenerator(name = "result_seq", sequenceName = "result_seq", allocationSize = 1)
+    @SequenceGenerator(name = "result_seq", sequenceName = "\"RESULT_SEQ\"", allocationSize = 1)
     private Long id;
     
-    @Column(nullable = false)
+    @Column(name = "\"X\"", nullable = false)
     private Double x;
-    
-    @Column(nullable = false)
+
+    @Column(name = "\"Y\"", nullable = false)
     private Double y;
-    
-    @Column(nullable = false)
+
+    @Column(name = "\"R\"", nullable = false)
     private Double r;
-    
-    @Column(nullable = false)
+
+    @Column(name = "\"HIT\"", nullable = false)
     private Boolean hit;
-    
-    @Column(nullable = false)
+
+    @Column(name = "\"TIMESTAMP\"", nullable = false)
     private LocalDateTime timestamp;
-    
-    @Column
+
+    @Column(name = "\"EXECUTION_TIME\"")
     private String executionTime;
     
-    @Column(name = "keycloak_id", nullable = false)
+    @Column(name = "\"KEYCLOAK_ID\"", nullable = false)
     private String keycloakId;
     
     @PrePersist
