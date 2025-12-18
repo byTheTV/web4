@@ -36,14 +36,14 @@ public class AdminController {
         logger.info("Admin requesting daily stats for date: {}", targetDate);
 
         LocalDate parsedDate;
-        try {
+            try {
             parsedDate = date != null && !date.isEmpty() 
                     ? LocalDate.parse(date) 
                     : LocalDate.now();
-        } catch (Exception e) {
-            logger.error("Invalid date format: {}", date);
-            return ResponseEntity.badRequest().build();
-        }
+            } catch (Exception e) {
+                logger.error("Invalid date format: {}", date);
+                return ResponseEntity.badRequest().build();
+            }
 
         // Создаем диапазон дат
         LocalDateTime startOfDay = parsedDate.atStartOfDay();
@@ -66,7 +66,7 @@ public class AdminController {
             item.put("checkCount", count);
             result.add(item);
             
-            logger.debug("User stats - keycloakId: {}, username: {}, count: {}", 
+            logger.debug("User stats - keycloakId: {}, username: {}, count: {}",
                         stat[0], stat[1], count);
         }
 

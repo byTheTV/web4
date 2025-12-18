@@ -275,7 +275,7 @@ const MainPage = () => {
         </h1>
         <div className="header-actions">
           <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '15px'}}>
-            <span className="username">Пользователь: {username}</span>
+          <span className="username">Пользователь: {username}</span>
             {maxRadius !== null && (
               <span style={{fontSize: '0.85em', color: '#666', marginTop: '2px'}}>
                 Макс. радиус: {maxRadius}

@@ -32,8 +32,8 @@ const ProtectedUserRoute = ({ children }) => {
 
   const roles = getUserRoles();
   if (!roles.includes('USER')) {
-    console.warn('User authenticated but USER role not found. Allowing access anyway.');
-    return children;
+    console.warn('User authenticated but USER role not found. Access denied.');
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -84,9 +84,13 @@ const HomeRoute = () => {
     
     if (roles.includes('ADMIN')) {
       return <Navigate to="/admin" replace />;
-    } else {
-      // USER или любой авторизованный пользователь идет на /app
+    } else if (roles.includes('USER')) {
+      // Только пользователи с ролью USER идут на /app
       return <Navigate to="/app" replace />;
+    } else {
+      // Пользователь авторизован, но нет роли USER - остаемся на главной
+      console.warn('User authenticated but no USER role found. Access denied.');
+      return <LandingPage />;
     }
   }
 

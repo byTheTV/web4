@@ -22,7 +22,7 @@ public class ResultService {
 
     @Autowired
     private ResultRepository resultRepository;
-    
+
     @Autowired
     private CheckLogRepository checkLogRepository;
 

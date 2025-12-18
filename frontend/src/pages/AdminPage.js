@@ -49,7 +49,7 @@ const AdminPage = () => {
 
   const handleDateChange = (e) => {
     if (e.value) {
-      setSelectedDate(e.value);
+    setSelectedDate(e.value);
       // Используем локальную дату
       const year = e.value.getFullYear();
       const month = String(e.value.getMonth() + 1).padStart(2, '0');
