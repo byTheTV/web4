@@ -6,8 +6,9 @@ import './LoginPage.css';
 
 const LandingPage = () => {
   const handleLogin = () => {
+    console.log('Login clicked, redirecting to Keycloak...');
     keycloak.login({
-      redirectUri: `${window.location.origin}/`
+      redirectUri: `${window.location.origin}/`,
     });
   };
 

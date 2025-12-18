@@ -10,7 +10,14 @@ let initPromise = null;
 
 export const initKeycloak = (options) => {
   if (!initPromise) {
+    console.log('Initializing Keycloak with options:', options);
     initPromise = keycloak.init(options).catch((err) => {
+      console.error('Keycloak init promise failed:', err);
+      console.error('Error details:', {
+        message: err?.message,
+        error: err?.error,
+        error_description: err?.error_description
+      });
       initPromise = null;
       throw err;
     });

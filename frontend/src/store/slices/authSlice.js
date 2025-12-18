@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import keycloak, { initKeycloak, resetKeycloak } from '../../keycloak';
+import keycloak, { initKeycloak } from '../../keycloak';
 
 let keycloakInitialized = false;
 
@@ -13,60 +13,82 @@ export const initializeKeycloak = createAsyncThunk(
   'auth/initializeKeycloak',
   async (_, { rejectWithValue }) => {
     try {
-      const hasAuthParams =
-        window.location.href.includes('code=') ||
-        window.location.href.includes('session_state=');
+      console.log('initializeKeycloak - keycloakInitialized:', keycloakInitialized);
+      console.log('Current URL:', window.location.href);
 
-      // Если есть параметры авторизации, сбрасываем инициализацию для переинициализации
-      if (hasAuthParams && keycloakInitialized) {
-        resetKeycloak();
-        keycloakInitialized = false;
-      }
+      // Проверяем наличие auth параметров в hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hasCode = hashParams.has('code');
+      const hasSessionState = hashParams.has('session_state');
+      
+      console.log('hasCode:', hasCode, 'hasSessionState:', hasSessionState);
 
       if (!keycloakInitialized) {
-        const authenticated = await initKeycloak({
-          onLoad: hasAuthParams ? 'login-required' : 'check-sso',
-          checkLoginIframe: false,
-          pkceMethod: 'S256',
-          silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-        });
+        let authenticated = false;
+        
+        try {
+          // Если есть параметры авторизации, не используем onLoad
+          // Keycloak сам поймет что это callback и обработает его
+          const initConfig = {
+            checkLoginIframe: false,
+            pkceMethod: 'S256',
+          };
+          
+          // Используем check-sso только если нет параметров авторизации
+          if (!hasCode && !hasSessionState) {
+            initConfig.onLoad = 'check-sso';
+          }
+          
+          console.log('Initializing Keycloak with config:', initConfig);
+          
+          authenticated = await initKeycloak(initConfig);
 
-        keycloakInitialized = true;
+          keycloakInitialized = true;
 
-        if (!authenticated) {
+          console.log('Keycloak initialized successfully');
+          console.log('  - authenticated:', authenticated);
+          console.log('  - keycloak.authenticated:', keycloak.authenticated);
+          console.log('  - keycloak.token:', keycloak.token ? 'exists' : 'null');
+          console.log('  - keycloak.tokenParsed:', keycloak.tokenParsed);
+
+          // Очищаем URL от hash параметров после успешной инициализации
+          if (window.location.hash && authenticated) {
+            console.log('Cleaning hash from URL');
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          }
+        } catch (initError) {
+          console.error('Keycloak init failed:', initError);
+          keycloakInitialized = false;
           return { token: null, username: null, authenticated: false };
         }
+
+        if (!authenticated) {
+          console.log('Not authenticated after init, returning false state');
+          return { token: null, username: null, authenticated: false };
+        }
+      } else {
+        console.log('Keycloak already initialized, checking state...');
+        console.log('  - keycloak.authenticated:', keycloak.authenticated);
+        console.log('  - keycloak.token:', keycloak.token ? 'exists' : 'null');
       }
 
       // Проверяем состояние после инициализации
       if (!keycloak.authenticated) {
+        console.log('Keycloak not authenticated after init, returning false state');
         return { token: null, username: null, authenticated: false };
       }
 
-      // Если есть параметры авторизации (после редиректа), ждем немного и обновляем токен
-      // чтобы убедиться, что все данные (включая роли) загружены
-      if (hasAuthParams) {
-        // Небольшая задержка для обработки редиректа
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Обновляем токен, чтобы получить актуальные данные (роли и т.д.)
-        try {
-          await keycloak.updateToken(30);
-        } catch (error) {
-          console.warn('Failed to update token after redirect:', error);
-          // Продолжаем работу даже если обновление токена не удалось
-        }
-        
-        // Очищаем URL от параметров авторизации после успешной инициализации
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
+      const username = extractUsername();
+      console.log('Returning authenticated state with username:', username);
+      
       return {
         token: keycloak.token,
-        username: extractUsername(),
+        username: username,
         authenticated: true,
       };
     } catch (error) {
+      console.error('Keycloak initialization error (outer):', error);
+      keycloakInitialized = false;
       return rejectWithValue(error?.message || 'Не удалось инициализировать Keycloak');
     }
   }
@@ -117,10 +139,12 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(initializeKeycloak.fulfilled, (state, action) => {
+        console.log('initializeKeycloak.fulfilled - payload:', action.payload);
         state.loading = false;
         state.token = action.payload.token;
         state.username = action.payload.username;
         state.isAuthenticated = !!action.payload.authenticated;
+        console.log('State updated - isAuthenticated:', state.isAuthenticated);
       })
       .addCase(initializeKeycloak.rejected, (state, action) => {
         state.loading = false;
