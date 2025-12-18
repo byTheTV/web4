@@ -8,16 +8,22 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "\"results\"")
+@Table(name = "\"check_logs\"")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Result {
+public class CheckLog {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "result_seq")
-    @SequenceGenerator(name = "result_seq", sequenceName = "\"result_seq\"", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "check_log_seq")
+    @SequenceGenerator(name = "check_log_seq", sequenceName = "\"check_log_seq\"", allocationSize = 1)
     private Long id;
     
+    @Column(name = "\"keycloak_id\"", nullable = false)
+    private String keycloakId;
+
+    @Column(name = "\"username\"")
+    private String username;
+
     @Column(name = "\"x\"", nullable = false)
     private Double x;
 
@@ -32,16 +38,9 @@ public class Result {
 
     @Column(name = "\"timestamp\"", nullable = false)
     private LocalDateTime timestamp;
-
-    @Column(name = "\"execution_time\"")
-    private String executionTime;
-    
-    @Column(name = "\"keycloak_id\"", nullable = false)
-    private String keycloakId;
     
     @PrePersist
     protected void onCreate() {
         timestamp = LocalDateTime.now();
     }
 }
-

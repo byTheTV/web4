@@ -3,14 +3,18 @@ package org.example.controller;
 import jakarta.validation.Valid;
 import org.example.dto.PointCheckRequest;
 import org.example.dto.ResultResponse;
-import org.example.entity.User;
-import org.example.repository.UserRepository;
 import org.example.service.ResultService;
+import org.example.service.UserContextService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -18,35 +22,56 @@ import java.util.List;
 @RequestMapping("/api/area")
 @CrossOrigin(origins = "http://localhost:3000")
 public class AreaCheckController {
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(AreaCheckController.class);
+
     @Autowired
     private ResultService resultService;
     
     @Autowired
-    private UserRepository userRepository;
+    private UserContextService userContextService;
     
     @PostMapping("/check")
-    public ResponseEntity<ResultResponse> checkPoint(
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> checkPoint(
             @Valid @RequestBody PointCheckRequest request,
-            Authentication authentication) {
+            JwtAuthenticationToken authentication) {
+
+        Jwt jwt = authentication.getToken();
+        String keycloakId = jwt.getSubject();
+        String username = jwt.getClaimAsString("preferred_username");
+        if (username == null || username.isBlank()) {
+            username = authentication.getName();
+        }
+
+        logger.info("User {} (keycloakId: {}) checking point: x={}, y={}, r={}",
+                   username, keycloakId, request.getX(), request.getY(), request.getR());
         
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
+        // Проверка maxRadius через UserContextService
+        if (userContextService.isRadiusExceeded(request.getR())) {
+            double maxRadius = userContextService.getMaxRadius();
+            String errorMessage = String.format(
+                "R value (%.1f) exceeds maximum allowed value (%.1f) for user %s",
+                request.getR(), maxRadius, username
+            );
+            logger.warn(errorMessage);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(errorMessage);
+        }
+
         ResultResponse result = resultService.checkPoint(
-                request.getX(), request.getY(), request.getR(), user);
+                request.getX(), request.getY(), request.getR(), keycloakId, username);
         
         return ResponseEntity.ok(result);
     }
     
     @GetMapping("/results")
-    public ResponseEntity<List<ResultResponse>> getResults(Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<ResultResponse>> getResults(JwtAuthenticationToken authentication) {
+        Jwt jwt = authentication.getToken();
+        String keycloakId = jwt.getSubject();
         
-        List<ResultResponse> results = resultService.getResultsByUser(user);
+        List<ResultResponse> results = resultService.getResultsByKeycloakId(keycloakId);
         return ResponseEntity.ok(results);
     }
 }

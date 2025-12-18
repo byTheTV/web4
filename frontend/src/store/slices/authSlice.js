@@ -1,141 +1,175 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../api';
+import keycloak, { initKeycloak } from '../../keycloak';
 
-export const login = createAsyncThunk(
-  'auth/login',
-  async ({ username, password }, { rejectWithValue }) => {
-    try {
-      const response = await api.post('/api/auth/login', { username, password });
-      const { token, refreshToken, username: responseUsername } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('username', responseUsername);
-      return { token, refreshToken, username: responseUsername };
-    } catch (error) {
-      return rejectWithValue(error.response?.data || 'Login failed');
-    }
-  }
-);
+let keycloakInitialized = false;
 
-export const register = createAsyncThunk(
-  'auth/register',
-  async ({ username, password }, { rejectWithValue }) => {
-    try {
-      const response = await api.post('/api/auth/register', { username, password });
-      const { token, refreshToken, username: responseUsername } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('username', responseUsername);
-      return { token, refreshToken, username: responseUsername };
-    } catch (error) {
-      return rejectWithValue(error.response?.data || 'Registration failed');
-    }
-  }
-);
+const extractUsername = () =>
+  keycloak.tokenParsed?.preferred_username ||
+  keycloak.tokenParsed?.email ||
+  keycloak.tokenParsed?.sub ||
+  '';
 
-export const refreshToken = createAsyncThunk(
-  'auth/refreshToken',
+export const initializeKeycloak = createAsyncThunk(
+  'auth/initializeKeycloak',
   async (_, { rejectWithValue }) => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
+      console.log('initializeKeycloak - keycloakInitialized:', keycloakInitialized);
+      console.log('Current URL:', window.location.href);
+
+      // Проверяем наличие auth параметров в hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hasCode = hashParams.has('code');
+      const hasSessionState = hashParams.has('session_state');
+      
+      console.log('hasCode:', hasCode, 'hasSessionState:', hasSessionState);
+
+      if (!keycloakInitialized) {
+        let authenticated = false;
+        
+        try {
+          // Если есть параметры авторизации, не используем onLoad
+          // Keycloak сам поймет что это callback и обработает его
+          const initConfig = {
+            checkLoginIframe: false,
+            pkceMethod: 'S256',
+          };
+          
+          // Используем check-sso только если нет параметров авторизации
+          if (!hasCode && !hasSessionState) {
+            initConfig.onLoad = 'check-sso';
+          }
+          
+          console.log('Initializing Keycloak with config:', initConfig);
+          
+          authenticated = await initKeycloak(initConfig);
+
+          keycloakInitialized = true;
+
+          console.log('Keycloak initialized successfully');
+          console.log('  - authenticated:', authenticated);
+          console.log('  - keycloak.authenticated:', keycloak.authenticated);
+          console.log('  - keycloak.token:', keycloak.token ? 'exists' : 'null');
+          console.log('  - keycloak.tokenParsed:', keycloak.tokenParsed);
+
+          // Очищаем URL от hash параметров после успешной инициализации
+          if (window.location.hash && authenticated) {
+            console.log('Cleaning hash from URL');
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          }
+        } catch (initError) {
+          console.error('Keycloak init failed:', initError);
+          keycloakInitialized = false;
+          return { token: null, username: null, authenticated: false };
+        }
+
+        if (!authenticated) {
+          console.log('Not authenticated after init, returning false state');
+          return { token: null, username: null, authenticated: false };
+        }
+      } else {
+        console.log('Keycloak already initialized, checking state...');
+        console.log('  - keycloak.authenticated:', keycloak.authenticated);
+        console.log('  - keycloak.token:', keycloak.token ? 'exists' : 'null');
       }
-      const response = await api.post('/api/auth/refresh', { refreshToken });
-      const { token, refreshToken: newRefreshToken, username } = response.data;
-      localStorage.setItem('token', token);
-      if (newRefreshToken) {
-        localStorage.setItem('refreshToken', newRefreshToken);
+
+      if (!keycloak.authenticated) {
+        console.log('Keycloak not authenticated after init, returning false state');
+        return { token: null, username: null, authenticated: false };
       }
-      return { token, refreshToken: newRefreshToken || refreshToken, username };
+
+      const username = extractUsername();
+      console.log('Returning authenticated state with username:', username);
+      
+      return {
+        token: keycloak.token,
+        username: username,
+        authenticated: true,
+      };
     } catch (error) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('username');
-      return rejectWithValue(error.response?.data || 'Token refresh failed');
+      console.error('Keycloak initialization error (outer):', error);
+      keycloakInitialized = false;
+      return rejectWithValue(error?.message || 'Не удалось инициализировать Keycloak');
     }
   }
 );
+
+export const refreshKeycloakToken = createAsyncThunk(
+  'auth/refreshKeycloakToken',
+  async (_, { rejectWithValue }) => {
+    try {
+      if (!keycloakInitialized) {
+        return rejectWithValue('Keycloak не инициализирован');
+      }
+      await keycloak.updateToken(30);
+      return {
+        token: keycloak.token,
+        username: extractUsername(),
+      };
+    } catch (error) {
+      await keycloak.login();
+      return rejectWithValue(error?.message || 'Сессия истекла, требуется вход');
+    }
+  }
+);
+
+export const logoutFromKeycloak = createAsyncThunk('auth/logoutFromKeycloak', async () => {
+  await keycloak.logout();
+  return {};
+});
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    token: localStorage.getItem('token'),
-    refreshToken: localStorage.getItem('refreshToken'),
-    username: localStorage.getItem('username'),
-    isAuthenticated: !!localStorage.getItem('token'),
-    loading: false,
+    token: null,
+    username: null,
+    isAuthenticated: false,
+    loading: true,
     error: null,
   },
   reducers: {
-    logout: (state) => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('username');
-      state.token = null;
-      state.refreshToken = null;
-      state.username = null;
-      state.isAuthenticated = false;
-    },
     clearError: (state) => {
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(login.pending, (state) => {
+      .addCase(initializeKeycloak.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action) => {
+      .addCase(initializeKeycloak.fulfilled, (state, action) => {
+        console.log('initializeKeycloak.fulfilled - payload:', action.payload);
         state.loading = false;
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.username = action.payload.username;
-        state.isAuthenticated = true;
+        state.isAuthenticated = !!action.payload.authenticated;
+        console.log('State updated - isAuthenticated:', state.isAuthenticated);
       })
-      .addCase(login.rejected, (state, action) => {
+      .addCase(initializeKeycloak.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || null;
+        state.isAuthenticated = false;
       })
-      .addCase(register.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(register.fulfilled, (state, action) => {
-        state.loading = false;
+      .addCase(refreshKeycloakToken.fulfilled, (state, action) => {
         state.token = action.payload.token;
-        state.refreshToken = action.payload.refreshToken;
         state.username = action.payload.username;
         state.isAuthenticated = true;
       })
-      .addCase(register.rejected, (state, action) => {
-        state.loading = false;
+      .addCase(refreshKeycloakToken.rejected, (state, action) => {
         state.error = action.payload;
+        state.isAuthenticated = false;
       })
-      .addCase(refreshToken.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(refreshToken.fulfilled, (state, action) => {
-        state.loading = false;
-        state.token = action.payload.token;
-        if (action.payload.refreshToken) {
-          state.refreshToken = action.payload.refreshToken;
-        }
-        state.isAuthenticated = true;
-      })
-      .addCase(refreshToken.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(logoutFromKeycloak.fulfilled, (state) => {
         state.token = null;
-        state.refreshToken = null;
         state.username = null;
         state.isAuthenticated = false;
+        state.loading = false;
+        state.error = null;
       });
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { clearError } = authSlice.actions;
 export default authSlice.reducer;
 

@@ -5,6 +5,17 @@
 `http://localhost:8080`
 
 
+
+```bash
+docker compose -f docker-compose.keycloak.yml up -d
+
+powershell -ExecutionPolicy Bypass -File "d:\.javaproj\web4\setup-user-profile.ps1"
+```
+
+- Админ-панель: `http://localhost:8081`
+- Админ-учётка Keycloak: `admin` / `admin`
+
+
 ```bash
 cd frontend
 
@@ -14,10 +25,6 @@ npm start
 ```
 
 `http://localhost:3000`
-
-
-
-
 
 
 ```sql
@@ -45,22 +52,9 @@ area_check_user
 
 SELECT table_name FROM user_tables;
 SELECT * FROM results;
-SELECT * FROM users;  
+SELECT * FROM check_logs;  
 ```
 
-
-### Back-end
-- Spring Boot 3.2.0
-- Oracle Database
-- Java 17
-
-### Front-end
-- React 18.2.0
-- Redux Toolkit
-- PrimeReact
-- Axios
-
-### Настройка базы данных
 
 
 `src/main/resources/application.properties`:
@@ -70,19 +64,26 @@ SELECT * FROM users;
    spring.datasource.password=your_password
    ```
 
-
 ## API Endpoints
 
-### Аутентификация
-- `POST /api/auth/login` 
-- `POST /api/auth/register`
+### Проверка точки (требуется роль USER)
+- `POST /api/area/check` - проверка попадания точки в область
+  - Проверяет атрибут `maxRadius` из токена
+  - Если R превышает maxRadius, возвращает 400
+  - Сохраняет результат в таблицу `results`
+  - Логирует информацию о пользователе в таблицу `check_logs` для аудита
+- `GET /api/area/results` - получение результатов проверок текущего пользователя
 
-### Проверка точки
-- `POST /api/area/check` 
-- `GET /api/area/results` 
+### Админ-панель (требуется роль ADMIN)
+- `GET /api/admin/stats?date=YYYY-MM-DD` - статистика проверок по пользователям за день
+  - Параметр `date` опционален, по умолчанию текущая дата
+  - Возвращает: keycloak_id, username, количество проверок
+  - Данные берутся из таблицы `check_logs` (аудит-лог всех проверок)
 
 ### Валидация
-- `GET /api/validation/allowed-x` 
-- `GET /api/validation/allowed-r` 
+- `GET /api/validation/allowed-x`
+- `GET /api/validation/allowed-r`
 - `GET /api/validation/y-range`
+
+
 
