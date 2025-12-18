@@ -1,9 +1,5 @@
 package org.example.exception;
 
-/**
- * Исключение, выбрасываемое когда пользователь пытается использовать радиус
- * больше максимально допустимого для него значения
- */
 public class MaxRadiusExceededException extends RuntimeException {
     
     private final double requestedRadius;

@@ -19,18 +19,12 @@ public class UserContextService {
     private static final Logger logger = LoggerFactory.getLogger(UserContextService.class);
     private static final double DEFAULT_MAX_RADIUS = 2.0;
     
-    /**
-     * Получить Keycloak ID текущего пользователя
-     */
     public String getCurrentKeycloakId() {
         return getCurrentJwt()
                 .map(Jwt::getSubject)
                 .orElseThrow(() -> new IllegalStateException("User not authenticated"));
     }
     
-    /**
-     * Получить username текущего пользователя
-     */
     public String getCurrentUsername() {
         return getCurrentJwt()
                 .map(jwt -> {
@@ -42,20 +36,14 @@ public class UserContextService {
                 })
                 .orElseThrow(() -> new IllegalStateException("User not authenticated"));
     }
-    
-    /**
-     * Получить максимально допустимый радиус для текущего пользователя
-     * Если атрибут не установлен, возвращается значение по умолчанию
-     */
+
     public double getMaxRadius() {
         return getCurrentJwt()
                 .flatMap(this::extractMaxRadiusFromJwt)
                 .orElse(DEFAULT_MAX_RADIUS);
     }
     
-    /**
-     * Проверить, превышает ли указанный радиус максимально допустимый
-     */
+
     public boolean isRadiusExceeded(double radius) {
         double maxRadius = getMaxRadius();
         boolean exceeded = radius > maxRadius;

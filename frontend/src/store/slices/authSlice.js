@@ -72,7 +72,6 @@ export const initializeKeycloak = createAsyncThunk(
         console.log('  - keycloak.token:', keycloak.token ? 'exists' : 'null');
       }
 
-      // Проверяем состояние после инициализации
       if (!keycloak.authenticated) {
         console.log('Keycloak not authenticated after init, returning false state');
         return { token: null, username: null, authenticated: false };

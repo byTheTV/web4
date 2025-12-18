@@ -15,7 +15,6 @@ const getUserRoles = () => {
   return Array.from(new Set([...realmRoles, ...clientRoles]));
 };
 
-// Компонент для защиты маршрута USER
 const ProtectedUserRoute = ({ children }) => {
   const { isAuthenticated, loading } = useSelector(state => state.auth);
 
@@ -33,9 +32,6 @@ const ProtectedUserRoute = ({ children }) => {
 
   const roles = getUserRoles();
   if (!roles.includes('USER')) {
-    // Если пользователь авторизован, но нет роли USER, все равно разрешаем доступ
-    // (возможно, роль еще не назначена администратором)
-    // В production это должно быть настроено через default roles в Keycloak
     console.warn('User authenticated but USER role not found. Allowing access anyway.');
     return children;
   }
@@ -43,7 +39,6 @@ const ProtectedUserRoute = ({ children }) => {
   return children;
 };
 
-// Компонент для защиты маршрута ADMIN
 const ProtectedAdminRoute = ({ children }) => {
   const { isAuthenticated, loading } = useSelector(state => state.auth);
 
@@ -83,7 +78,6 @@ const HomeRoute = () => {
     );
   }
 
-  // Если авторизован, определяем куда редиректить
   if (isAuthenticated && keycloak.authenticated) {
     const roles = getUserRoles();
     console.log('Redirecting authenticated user with roles:', roles);
@@ -96,7 +90,6 @@ const HomeRoute = () => {
     }
   }
 
-  // Если не авторизован, показываем страницу входа
   return <LandingPage />;
 };
 
@@ -106,7 +99,6 @@ function App() {
   const initializedRef = React.useRef(false);
 
   useEffect(() => {
-    // Инициализируем Keycloak только один раз
     if (!initializedRef.current) {
       console.log('App - initializing Keycloak...');
       initializedRef.current = true;
