@@ -64,8 +64,11 @@
   "users": [
     {
       "username": "demo",
+      "email": "demo@area-check.local",
       "enabled": true,
       "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
       "credentials": [
         {
           "type": "password",
@@ -82,8 +85,11 @@
     },
     {
       "username": "admin",
+      "email": "admin@area-check.local",
       "enabled": true,
       "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
       "credentials": [
         {
           "type": "password",
@@ -101,8 +107,11 @@
     },
     {
       "username": "user1",
+      "email": "user1@area-check.local",
       "enabled": true,
       "emailVerified": true,
+      "firstName": "User",
+      "lastName": "One",
       "credentials": [
         {
           "type": "password",

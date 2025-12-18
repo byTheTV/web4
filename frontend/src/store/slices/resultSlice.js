@@ -5,9 +5,14 @@ export const checkPoint = createAsyncThunk(
   'result/checkPoint',
   async ({ x, y, r }, { rejectWithValue }) => {
     try {
+      console.log('Sending checkPoint request:', { x, y, r });
       const response = await api.post('/api/area/check', { x, y, r });
+      console.log('checkPoint response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('checkPoint error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       return rejectWithValue(error.response?.data || 'Check failed');
     }
   }
@@ -17,9 +22,12 @@ export const fetchResults = createAsyncThunk(
   'result/fetchResults',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Fetching results from /api/area/results');
       const response = await api.get('/api/area/results');
+      console.log('Results fetched:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Failed to fetch results:', error);
       return rejectWithValue(error.response?.data || 'Fetch failed');
     }
   }

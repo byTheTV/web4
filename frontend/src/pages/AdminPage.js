@@ -18,29 +18,48 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const { username, isAuthenticated } = useSelector(state => state.auth);
   const { stats, loading, error } = useSelector(state => state.admin);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [dateString, setDateString] = useState('');
+  
+  // Инициализируем сегодняшней датой (локальное время)
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+  
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+
+  const loadStats = () => {
+    // Используем локальную дату без преобразований в UTC
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const date = `${year}-${month}-${day}`;
+    
+    console.log('Loading stats for date:', date);
+    dispatch(fetchAdminStats(date));
+  };
 
   useEffect(() => {
     // Загрузка статистики за сегодня
     if (isAuthenticated) {
+      console.log('Admin page mounted, loading stats...');
       loadStats();
     }
-  }, [dispatch, isAuthenticated]);
-
-  const loadStats = () => {
-    const date = dateString || selectedDate.toISOString().split('T')[0];
-    dispatch(fetchAdminStats(date));
-  };
+  }, [isAuthenticated]);
 
   const handleDateChange = (e) => {
-    setSelectedDate(e.value);
     if (e.value) {
-      const dateStr = e.value.toISOString().split('T')[0];
-      setDateString(dateStr);
+      setSelectedDate(e.value);
+      // Используем локальную дату
+      const year = e.value.getFullYear();
+      const month = String(e.value.getMonth() + 1).padStart(2, '0');
+      const day = String(e.value.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      console.log('Date changed to:', dateStr);
       dispatch(fetchAdminStats(dateStr));
     } else {
-      setDateString('');
+      setSelectedDate(getTodayDate());
       loadStats();
     }
   };
@@ -69,8 +88,8 @@ const AdminPage = () => {
         <Card className="form-card">
           <h2>Статистика проверок по пользователям</h2>
           
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="date" style={{ marginRight: '0.5rem' }}>Дата:</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+            <label htmlFor="date">Дата:</label>
             <Calendar
               id="date"
               value={selectedDate}
@@ -80,9 +99,10 @@ const AdminPage = () => {
             />
             <Button
               label="Обновить"
+              icon="pi pi-refresh"
               onClick={loadStats}
-              style={{ marginLeft: '0.5rem' }}
               loading={loading}
+              size="small"
             />
           </div>
 
@@ -90,7 +110,7 @@ const AdminPage = () => {
             <Message 
               severity="error" 
               text={typeof error === 'string' ? error : (error?.message || JSON.stringify(error))} 
-              className="error-message" 
+              style={{ marginBottom: '1rem' }}
             />
           )}
           
@@ -100,20 +120,28 @@ const AdminPage = () => {
             emptyMessage="Нет данных за выбранную дату"
             className="results-table"
             responsiveLayout="scroll"
+            sortField="checkCount"
+            sortOrder={-1}
+            showGridlines
           >
             <Column 
               field="username" 
-              header="Имя пользователя"
-              body={(rowData) => rowData.username || rowData.keycloakId || 'N/A'}
+              header="Пользователь"
+              body={(rowData) => rowData.username || 'N/A'}
+              sortable
             />
             <Column 
               field="keycloakId" 
               header="Keycloak ID"
+              sortable
+              style={{ fontSize: '0.85em', color: '#666' }}
             />
             <Column 
               field="checkCount" 
-              header="Количество проверок"
-              body={(rowData) => String(rowData.checkCount || 0)}
+              header="Проверок"
+              body={(rowData) => <span style={{ fontWeight: 'bold' }}>{rowData.checkCount || 0}</span>}
+              sortable
+              style={{ textAlign: 'center' }}
             />
           </DataTable>
         </Card>

@@ -22,15 +22,36 @@ const MainPage = () => {
   const [rSuggestions, setRSuggestions] = useState([]);
   const [yError, setYError] = useState('');
   const [maxRadius, setMaxRadius] = useState(null);
+  const [allowedR, setAllowedR] = useState([]);
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { username, isAuthenticated } = useSelector(state => state.auth);
   const { results, loading, error } = useSelector(state => state.result);
 
-
   const allowedX = ['-2', '-1.5', '-1', '-0.5', '0', '0.5', '1', '1.5', '2'];
-  const allowedR = ['-2', '-1.5', '-1', '-0.5', '0', '0.5', '1', '1.5', '2'];
+
+  // Генерация допустимых значений R на основе maxRadius
+  const generateAllowedR = (maxR) => {
+    if (!maxR || maxR <= 0) return ['0.5', '1', '1.5', '2'];
+    
+    const values = [];
+    const step = 0.5;
+    
+    // Генерируем значения от 0.5 до maxRadius с шагом 0.5
+    for (let i = step; i <= maxR; i += step) {
+      values.push(i.toFixed(1));
+    }
+    
+    // Добавляем само значение maxRadius если его нет в списке
+    const maxRStr = maxR.toFixed(1);
+    if (!values.includes(maxRStr) && maxR > 0) {
+      values.push(maxRStr);
+      values.sort((a, b) => parseFloat(a) - parseFloat(b));
+    }
+    
+    return values;
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -38,17 +59,27 @@ const MainPage = () => {
 
       // Получаем maxRadius из токена
       const maxRadiusClaim = keycloak.tokenParsed?.maxRadius;
+      let maxR = 2.0; // значение по умолчанию
+      
       if (maxRadiusClaim) {
         if (typeof maxRadiusClaim === 'number') {
-          setMaxRadius(maxRadiusClaim);
+          maxR = maxRadiusClaim;
         } else if (typeof maxRadiusClaim === 'string') {
           try {
-            setMaxRadius(parseFloat(maxRadiusClaim));
+            maxR = parseFloat(maxRadiusClaim);
           } catch (e) {
             console.warn('Invalid maxRadius in token:', maxRadiusClaim);
           }
         }
       }
+      
+      console.log('Setting maxRadius:', maxR);
+      setMaxRadius(maxR);
+      
+      // Генерируем допустимые значения R
+      const allowed = generateAllowedR(maxR);
+      console.log('Generated allowedR:', allowed);
+      setAllowedR(allowed);
     }
   }, [dispatch, isAuthenticated]);
 
@@ -144,6 +175,12 @@ const MainPage = () => {
     const xValue = normalizeValue(x);
     const rValue = normalizeValue(r);
     
+    console.log('=== SUBMIT DEBUG ===');
+    console.log('Submit - rValue:', rValue, 'type:', typeof rValue);
+    console.log('Submit - allowedR:', allowedR);
+    console.log('Submit - maxRadius:', maxRadius);
+    console.log('Submit - keycloak.tokenParsed?.maxRadius:', keycloak.tokenParsed?.maxRadius);
+    
     if (!xValue || xValue === null || xValue === undefined) {
       return;
     }
@@ -161,25 +198,35 @@ const MainPage = () => {
       return;
     }
 
-    if (!allowedR.includes(rValue)) {
-      alert(`R должно быть одним из: ${allowedR.join(', ')}`);
-      return;
-    }
-
     const rNum = parseFloat(rValue.replace(',', '.'));
     if (isNaN(rNum) || !isFinite(rNum) || rNum <= 0) {
-      alert('R должен быть положительным числом из указанного набора. Хоть в задании написано, что R может быть отрицательным, но отрицательные радиусы не существуют в нашем случае');
+      alert('R должен быть положительным числом');
       return;
     }
 
     // Проверка maxRadius
     if (maxRadius !== null && rNum > maxRadius) {
-      alert(`R (${rNum}) превышает максимально допустимое значение (${maxRadius})`);
+      alert(`R (${rNum}) превышает ваш максимально допустимый радиус (${maxRadius})`);
+      return;
+    }
+    
+    // Нормализуем rValue для сравнения - приводим к формату с одним знаком после запятой
+    const normalizedRValue = rNum.toFixed(1);
+    console.log('Normalized rValue for comparison:', normalizedRValue);
+    
+    // Проверка что значение в списке разрешенных
+    if (allowedR.length > 0 && !allowedR.includes(normalizedRValue)) {
+      console.log('Value not found in allowedR!');
+      alert(`R должно быть одним из допустимых значений: ${allowedR.join(', ')}`);
       return;
     }
 
     const xNum = parseFloat(xValue.replace(',', '.'));
     const yNum = parseFloat(y.replace(',', '.'));
+    
+    console.log('=== SENDING TO SERVER ===');
+    console.log('Final values: x=', xNum, 'y=', yNum, 'r=', rNum);
+    console.log('maxRadius from token:', maxRadius);
     
     await dispatch(checkPoint({ x: xNum, y: yNum, r: rNum }));
     await dispatch(fetchResults());
@@ -227,7 +274,14 @@ const MainPage = () => {
           {studentInfo.name}, группа {studentInfo.group}, {studentInfo.variant}
         </h1>
         <div className="header-actions">
-          <span className="username">Пользователь: {username}</span>
+          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '15px'}}>
+            <span className="username">Пользователь: {username}</span>
+            {maxRadius !== null && (
+              <span style={{fontSize: '0.85em', color: '#666', marginTop: '2px'}}>
+                Макс. радиус: {maxRadius}
+              </span>
+            )}
+          </div>
           <Button 
             label="Выход" 
             onClick={handleLogout}
@@ -286,7 +340,7 @@ const MainPage = () => {
               </div>
               
               <div className="form-field">
-                <label htmlFor="r">R:</label>
+                <label htmlFor="r">R (радиус):</label>
                 <AutoComplete
                   id="r"
                   value={normalizeValue(r) || ''}
@@ -301,7 +355,12 @@ const MainPage = () => {
                   required
                   className="form-input"
                 />
-                <small>Допустимые значения: {allowedR.join(', ')}</small>
+                {maxRadius !== null && (
+                  <small className="hint-text" style={{color: '#2196f3', fontWeight: 'bold'}}>
+                    Ваш максимальный радиус: {maxRadius}
+                  </small>
+                )}
+                <small>Допустимые значения: {allowedR.length > 0 ? allowedR.join(', ') : 'загрузка...'}</small>
               </div>
               
               <Button
@@ -315,7 +374,14 @@ const MainPage = () => {
                   !r ||
                   !!yError ||
                   !allowedX.includes(normalizeValue(x) || '') ||
-                  !allowedR.includes(normalizeValue(r) || '')
+                  (() => {
+                    const rValue = normalizeValue(r);
+                    if (!rValue || allowedR.length === 0) return false;
+                    const rNum = parseFloat(rValue.replace(',', '.'));
+                    if (isNaN(rNum)) return true;
+                    const normalizedR = rNum.toFixed(1);
+                    return !allowedR.includes(normalizedR);
+                  })()
                 }
                 className="submit-button"
               />

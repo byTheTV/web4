@@ -88,7 +88,7 @@ area_check_user
 
 SELECT table_name FROM user_tables;
 SELECT * FROM results;
-SELECT * FROM users;  
+SELECT * FROM check_logs;  
 ```
 
 
@@ -119,12 +119,15 @@ SELECT * FROM users;
 - `POST /api/area/check` - проверка попадания точки в область
   - Проверяет атрибут `maxRadius` из токена
   - Если R превышает maxRadius, возвращает 400
-  - Логирует информацию о пользователе в таблицу `check_logs`
+  - Сохраняет результат в таблицу `results`
+  - Логирует информацию о пользователе в таблицу `check_logs` для аудита
 - `GET /api/area/results` - получение результатов проверок текущего пользователя
 
 ### Админ-панель (требуется роль ADMIN)
 - `GET /api/admin/stats?date=YYYY-MM-DD` - статистика проверок по пользователям за день
   - Параметр `date` опционален, по умолчанию текущая дата
+  - Возвращает: keycloak_id, username, количество проверок
+  - Данные берутся из таблицы `check_logs` (аудит-лог всех проверок)
 
 ### Валидация
 - `GET /api/validation/allowed-x`

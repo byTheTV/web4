@@ -22,7 +22,7 @@ public class ResultService {
 
     @Autowired
     private ResultRepository resultRepository;
-
+    
     @Autowired
     private CheckLogRepository checkLogRepository;
 
@@ -53,7 +53,7 @@ public class ResultService {
         result = resultRepository.save(result);
         logger.debug("Saved result with id: {}", result.getId());
 
-        // Логирование информации о пользователе в админ-таблицу
+        // Логирование в админ-таблицу для статистики
         CheckLog log = new CheckLog();
         log.setKeycloakId(keycloakId);
         log.setUsername(username);
@@ -63,7 +63,7 @@ public class ResultService {
         log.setHit(hit);
         CheckLog savedLog = checkLogRepository.save(log);
 
-        logger.info("Admin log created for user {} (keycloakId: {}): checkId={}, result={}",
+        logger.info("Check logged for user {} (keycloakId: {}): logId={}, result={}", 
                    username, keycloakId, savedLog.getId(), hit ? "HIT" : "MISS");
 
         return convertToResponse(result);

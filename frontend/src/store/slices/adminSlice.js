@@ -6,9 +6,12 @@ export const fetchAdminStats = createAsyncThunk(
   async (date, { rejectWithValue }) => {
     try {
       const url = date ? `/api/admin/stats?date=${date}` : '/api/admin/stats';
+      console.log('Fetching admin stats from:', url);
       const response = await api.get(url);
+      console.log('Admin stats response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Failed to fetch admin stats:', error);
       return rejectWithValue(error.response?.data || 'Failed to fetch admin stats');
     }
   }

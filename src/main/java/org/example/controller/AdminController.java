@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,39 +28,45 @@ public class AdminController {
     
     @GetMapping("/stats")
     @PreAuthorize("hasRole('ADMIN')")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<Map<String, Object>>> getDailyStats(
             @RequestParam(required = false) String date) {
 
         String targetDate = date != null && !date.isEmpty() ? date : LocalDate.now().toString();
         logger.info("Admin requesting daily stats for date: {}", targetDate);
 
-        Timestamp targetTimestamp;
-        if (date != null && !date.isEmpty()) {
-            try {
-                LocalDate parsedDate = LocalDate.parse(date);
-                targetTimestamp = Timestamp.valueOf(parsedDate.atStartOfDay());
-            } catch (Exception e) {
-                logger.error("Invalid date format: {}", date);
-                return ResponseEntity.badRequest().build();
-            }
-        } else {
-            targetTimestamp = Timestamp.valueOf(LocalDate.now().atStartOfDay());
+        LocalDate parsedDate;
+        try {
+            parsedDate = date != null && !date.isEmpty() 
+                    ? LocalDate.parse(date) 
+                    : LocalDate.now();
+        } catch (Exception e) {
+            logger.error("Invalid date format: {}", date);
+            return ResponseEntity.badRequest().build();
         }
 
-        List<Object[]> stats = checkLogRepository.findDailyStatsByDate(targetTimestamp);
-        logger.info("Found {} user records for date {}", stats.size(), targetDate);
+        // Создаем диапазон дат
+        LocalDateTime startOfDay = parsedDate.atStartOfDay();
+        LocalDateTime endOfDay = parsedDate.plusDays(1).atStartOfDay();
+        
+        logger.info("Querying check logs from {} to {}", startOfDay, endOfDay);
+
+        // Используем CHECK_LOGS для статистики
+        List<Object[]> stats = checkLogRepository.findDailyStatsByDateRange(startOfDay, endOfDay);
+        logger.info("Found {} unique users for date {}", stats.size(), targetDate);
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object[] stat : stats) {
             Map<String, Object> item = new HashMap<>();
             item.put("keycloakId", stat[0]);
             item.put("username", stat[1]);
-            // Oracle возвращает BigDecimal для COUNT, нужно преобразовать
+            // COUNT возвращает BigDecimal в Oracle
             Object countObj = stat[2];
             Long count = countObj instanceof Number ? ((Number) countObj).longValue() : 0L;
             item.put("checkCount", count);
             result.add(item);
-            logger.debug("User stats - keycloakId: {}, username: {}, count: {}",
+            
+            logger.debug("User stats - keycloakId: {}, username: {}, count: {}", 
                         stat[0], stat[1], count);
         }
 

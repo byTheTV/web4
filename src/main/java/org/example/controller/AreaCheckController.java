@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.example.dto.PointCheckRequest;
 import org.example.dto.ResultResponse;
 import org.example.service.ResultService;
+import org.example.service.UserContextService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,9 @@ public class AreaCheckController {
     @Autowired
     private ResultService resultService;
     
+    @Autowired
+    private UserContextService userContextService;
+    
     @PostMapping("/check")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> checkPoint(
@@ -43,24 +47,16 @@ public class AreaCheckController {
         logger.info("User {} (keycloakId: {}) checking point: x={}, y={}, r={}",
                    username, keycloakId, request.getX(), request.getY(), request.getR());
         
-        // Проверка maxRadius из токена
-        Double maxRadius = null;
-        Object maxRadiusClaim = jwt.getClaim("maxRadius");
-        if (maxRadiusClaim != null) {
-            if (maxRadiusClaim instanceof Number) {
-                maxRadius = ((Number) maxRadiusClaim).doubleValue();
-            } else if (maxRadiusClaim instanceof String) {
-                try {
-                    maxRadius = Double.parseDouble((String) maxRadiusClaim);
-                } catch (NumberFormatException e) {
-                    // Игнорируем некорректное значение
-                }
-            }
-        }
-        
-        if (maxRadius != null && request.getR() > maxRadius) {
+        // Проверка maxRadius через UserContextService
+        if (userContextService.isRadiusExceeded(request.getR())) {
+            double maxRadius = userContextService.getMaxRadius();
+            String errorMessage = String.format(
+                "R value (%.1f) exceeds maximum allowed value (%.1f) for user %s",
+                request.getR(), maxRadius, username
+            );
+            logger.warn(errorMessage);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("R value (" + request.getR() + ") exceeds maximum allowed value (" + maxRadius + ")");
+                    .body(errorMessage);
         }
 
         ResultResponse result = resultService.checkPoint(
